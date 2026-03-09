@@ -157,6 +157,20 @@ const LessonEditor: React.FC<LessonEditorProps> = ({ lesson, onClose, onUpdate, 
         setPyqs(arrayMove(pyqs, oldIndex, newIndex).map((p: any, idx: number) => ({ ...p, order: idx })));
     };
 
+    const handleSmartSortPyqs = () => {
+        const sorted = [...pyqs].sort((a, b) => {
+            const getNumber = (text: string) => {
+                const match = (text || '').match(/^Q?(\d+)/i);
+                return match ? parseInt(match[1], 10) : Infinity;
+            };
+            const numA = getNumber(a.questionText);
+            const numB = getNumber(b.questionText);
+            if (numA === numB) return a.questionText?.localeCompare(b.questionText) || 0;
+            return numA - numB;
+        });
+        setPyqs(sorted.map((p, idx) => ({ ...p, order: idx })));
+    };
+
     // Quiz Handlers
     const handleToggleQuiz = () => {
         if (quiz) {
@@ -347,7 +361,10 @@ const LessonEditor: React.FC<LessonEditorProps> = ({ lesson, onClose, onUpdate, 
                                 <h3 className="font-semibold text-lg flex items-center gap-2">
                                     <span className="text-yellow-400">📝</span> Previous Year Questions
                                 </h3>
-                                <Button size="sm" variant="glass" onClick={handleAddPyq}>+ Add PYQ</Button>
+                                <div className="flex gap-2">
+                                    <Button size="sm" variant="glass" onClick={handleSmartSortPyqs} title="Sort automatically by Q-ID">✨ Smart Sort</Button>
+                                    <Button size="sm" variant="glass" onClick={handleAddPyq}>+ Add PYQ</Button>
+                                </div>
                             </div>
 
                             <div className="space-y-4">
