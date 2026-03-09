@@ -37,4 +37,10 @@ export const adminApi = {
     createBranch: (name: string) => api.post('/admin/branches', { name }),
     updateBranch: (id: string, name: string) => api.put(`/admin/branches/${id}`, { name }),
     deleteBranch: (id: string) => api.delete(`/admin/branches/${id}`),
+
+    // Blogs
+    getBlogsAdmin: () => api.get('/blogs/admin/all'),
+    createBlog: (data: any) => api.post('/blogs/admin', data),
+    updateBlog: (id: string, data: any) => api.put(`/blogs/admin/${id}`, data),
+    deleteBlog: (id: string) => api.delete(`/blogs/admin/${id}`),
 };
