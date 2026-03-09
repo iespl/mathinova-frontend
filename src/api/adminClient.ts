@@ -43,4 +43,8 @@ export const adminApi = {
     createBlog: (data: any) => api.post('/blogs/admin', data),
     updateBlog: (id: string, data: any) => api.put(`/blogs/admin/${id}`, data),
     deleteBlog: (id: string) => api.delete(`/blogs/admin/${id}`),
+
+    // Cloning
+    cloneModule: (moduleId: string, targetCourseId: string) => api.post(`/admin/modules/${moduleId}/clone`, { targetCourseId }),
+    cloneLesson: (lessonId: string, targetModuleId: string) => api.post(`/admin/lessons/${lessonId}/clone`, { targetModuleId }),
 };
