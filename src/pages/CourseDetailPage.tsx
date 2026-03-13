@@ -23,11 +23,14 @@ import {
     Mail,
     Twitter,
     Link as LinkIcon,
-    ChevronDown
+    ChevronDown,
+    Lock
 } from 'lucide-react';
 
 import CourseDescription from '../components/CourseDescription.js';
 import Math2Description from '../components/Math2Description.js';
+import RichTextDisplay from '../components/RichTextDisplay.js';
+import PYQPreviewModal from '../components/PYQPreviewModal.js';
 
 
 // Format price with correct currency symbol
@@ -86,6 +89,8 @@ const CourseDetailPage: React.FC = () => {
     const [isLoading, setIsLoading] = useState(true);
     const [openModules, setOpenModules] = useState<number[]>([0]);
     const [isMobile, setIsMobile] = useState(() => window.innerWidth <= 768);
+    const [isPyqModalOpen, setIsPyqModalOpen] = useState(false);
+    const [activePyq, setActivePyq] = useState<any>(null);
 
     useEffect(() => {
         const mq = window.matchMedia('(max-width: 768px)');
@@ -102,6 +107,34 @@ const CourseDetailPage: React.FC = () => {
         };
     }, []);
 
+    // Scroll to top on page mount
+    useEffect(() => {
+        window.scrollTo(0, 0);
+    }, []);
+
+    // Prevent background scroll and handle ESC key when modal is open
+    useEffect(() => {
+        const handleEsc = (e: KeyboardEvent) => {
+            if (e.key === 'Escape') {
+                setIsPyqModalOpen(false);
+                setActivePyq(null);
+            }
+        };
+
+        if (isPyqModalOpen) {
+            document.body.style.overflow = 'hidden';
+            window.addEventListener('keydown', handleEsc);
+        } else {
+            document.body.style.overflow = 'unset';
+            window.removeEventListener('keydown', handleEsc);
+        }
+
+        return () => {
+            document.body.style.overflow = 'unset';
+            window.removeEventListener('keydown', handleEsc);
+        };
+    }, [isPyqModalOpen]);
+
     const toggleModule = (idx: number) => {
         setOpenModules(prev =>
             prev.includes(idx) ? prev.filter(i => i !== idx) : [...prev, idx]
@@ -115,20 +148,6 @@ const CourseDetailPage: React.FC = () => {
             try {
                 const { data: courseData } = await api.get(`/courses/public/${slug}`);
                 setCourse(courseData);
-
-                // Set initial active video to the first sample found
-                const firstSample = courseData.modules
-                    ?.flatMap((m: any) => m.lessons)
-                    ?.flatMap((l: any) => l.videos)
-                    ?.find((v: any) => v.isSample);
-
-                if (firstSample) {
-                    setActiveVideo(firstSample);
-                    // If no promo video, show sample by default
-                    if (!courseData.promoVideoUrl) {
-                        setIsViewingPromo(false);
-                    }
-                }
 
                 if (user) {
                     const { data: enrollments } = await api.get('/student/courses');
@@ -167,6 +186,12 @@ const CourseDetailPage: React.FC = () => {
         );
     }
 
+
+    const stripAndDecode = (html: string) => {
+        if (!html) return '';
+        const doc = new DOMParser().parseFromString(html, 'text/html');
+        return doc.body.textContent || "";
+    };
 
     const handleCTA = async () => {
         // If enrollment is expired, go to checkout for renewal
@@ -211,6 +236,21 @@ const CourseDetailPage: React.FC = () => {
             lAcc + (lsn.videos?.reduce((vAcc: number, vid: any) => vAcc + (vid.duration || 0), 0) || 0)
             , 0) || 0)
         , 0) || 0;
+
+    // Filter all sample content for the Premium Showcase
+    const samplePYQs = course.modules?.flatMap((mod: any) => 
+        mod.lessons?.flatMap((lsn: any) => 
+            lsn.pyqs?.filter((p: any) => p.isSample).map((p: any) => ({ ...p, lessonTitle: lsn.title }))
+        )
+    ).filter(Boolean) || [];
+
+    const sampleVideos = course.modules?.flatMap((mod: any) => 
+        mod.lessons?.flatMap((lsn: any) => 
+            lsn.videos?.filter((v: any) => v.isSample).map((v: any) => ({ ...v, lessonTitle: lsn.title }))
+        )
+    ).filter(Boolean) || [];
+
+    const hasSamples = samplePYQs.length > 0 || sampleVideos.length > 0;
 
     return (
         <>
@@ -288,9 +328,8 @@ const CourseDetailPage: React.FC = () => {
                                 )}
                             </div>
 
-                            {/* What you'll learn */}
                             {Array.isArray(course.learningPoints) && course.learningPoints.length > 0 && (
-                                <GlassCard className="p-10 border-white/5">
+                                <GlassCard className="p-6 md:p-10 border-white/5">
                                     <h2 className="text-2xl font-serif font-black tracking-tight mb-8 text-text-primary">What you'll learn</h2>
                                     <div className="grid md:grid-cols-2 gap-x-12 gap-y-6">
                                         {course.learningPoints.map((item: string, i: number) => (
@@ -320,6 +359,71 @@ const CourseDetailPage: React.FC = () => {
                                         <Math2Description />
                                     )}
                                 </>
+                            )}
+
+                            {/* Premium Showcase - Featured Previews */}
+                            {!isEnrolled && hasSamples && (
+                                <section className="pt-10 space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-1000">
+                                    <div className="flex items-center gap-4">
+                                        <div className="h-px flex-1 bg-gradient-to-r from-transparent via-primary/20 to-transparent" />
+                                        <h3 className="text-xs font-black uppercase tracking-[0.3em] text-primary/80 px-4">Premium Showcase</h3>
+                                        <div className="h-px flex-1 bg-gradient-to-r from-transparent via-primary/20 to-transparent" />
+                                    </div>
+                                    
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        {/* Featured Videos */}
+                                        {sampleVideos.map((vid: any) => (
+                                            <GlassCard 
+                                                key={vid.id} 
+                                                className="p-5 border-blue-400/20 hover:border-blue-400/50 transition-all group flex flex-col gap-4 cursor-pointer"
+                                                onClick={() => {
+                                                    setActiveVideo(vid);
+                                                    setIsViewingPromo(false);
+                                                    window.scrollTo({ top: 300, behavior: 'smooth' });
+                                                }}
+                                            >
+                                                <div className="flex justify-between items-start">
+                                                    <div className="bg-blue-400/10 p-2 rounded-lg">
+                                                        <Play size={18} className="text-blue-400" />
+                                                    </div>
+                                                    <span className="px-2 py-0.5 rounded text-[9px] font-bold bg-blue-400/20 text-blue-400 uppercase tracking-tighter">Preview Video</span>
+                                                </div>
+                                                <div>
+                                                    <h4 className="text-sm font-bold text-text-primary group-hover:text-blue-400 transition-colors line-clamp-1">{vid.title}</h4>
+                                                    <p className="text-[10px] text-text-muted mt-1 uppercase font-semibold tracking-wide">In: {vid.lessonTitle}</p>
+                                                </div>
+                                            </GlassCard>
+                                        ))}
+
+                                        {/* Featured PYQs */}
+                                        {samplePYQs.map((pyq: any) => (
+                                            <GlassCard 
+                                                key={pyq.id} 
+                                                className="p-5 border-primary-cyan/20 hover:border-primary-cyan/50 transition-all group flex flex-col gap-4 cursor-pointer"
+                                                onClick={() => {
+                                                    setActivePyq(pyq);
+                                                    setIsPyqModalOpen(true);
+                                                }}
+                                            >
+                                                <div className="flex justify-between items-start">
+                                                    <div className="bg-primary-cyan/10 p-2 rounded-lg">
+                                                        <FileText size={18} className="text-primary-cyan" />
+                                                    </div>
+                                                    <span className="px-2 py-0.5 rounded text-[9px] font-bold bg-primary-cyan/20 text-primary-cyan uppercase tracking-tighter">Preview PYQ</span>
+                                                </div>
+                                                <div>
+                                                    <h4 className="text-sm font-bold text-text-primary group-hover:text-primary-cyan transition-colors line-clamp-2">
+                                                        {stripAndDecode(pyq.questionText || 'Answered PYQ')}
+                                                    </h4>
+                                                    <p className="text-[10px] text-text-muted mt-1 uppercase font-semibold tracking-wide">In: {pyq.lessonTitle}</p>
+                                                </div>
+                                            </GlassCard>
+                                        ))}
+                                    </div>
+                                    <div className="text-center">
+                                        <p className="text-[11px] text-text-muted font-medium italic italic">Get a taste of our premium curriculum above</p>
+                                    </div>
+                                </section>
                             )}
 
                             {/* Curriculum Accordion */}
@@ -362,7 +466,7 @@ const CourseDetailPage: React.FC = () => {
                                                 {/* Accordion content - always in DOM, animated via max-height */}
                                                 <div
                                                     style={{
-                                                        maxHeight: isOpen ? '2000px' : '0px',
+                                                        maxHeight: isOpen ? '9999px' : '0px',
                                                         overflow: 'hidden',
                                                         transition: 'max-height 0.35s ease-in-out',
                                                     }}
@@ -379,60 +483,78 @@ const CourseDetailPage: React.FC = () => {
                                                                     {lesson.videos?.map((vid: any) => (
                                                                         <div
                                                                             key={vid.id}
-                                                                            onClick={() => {
-                                                                                if (vid.isSample) {
-                                                                                    setActiveVideo(vid);
-                                                                                    setIsViewingPromo(false);
-                                                                                    window.scrollTo({ top: 0, behavior: 'smooth' });
-                                                                                } else {
-                                                                                    handleCTA();
-                                                                                }
-                                                                            }}
-                                                                            className="flex items-center gap-4 hover:bg-white/[0.04] transition-colors cursor-pointer group overflow-hidden"
-                                                                            style={{ paddingTop: '12px', paddingBottom: '12px', paddingLeft: '42px', paddingRight: '42px' }}
+                                                                            onClick={vid.isSample ? () => { 
+                                                                                setActiveVideo(vid); 
+                                                                                setIsViewingPromo(false); 
+                                                                                window.scrollTo({ top: 300, behavior: 'smooth' }); 
+                                                                            } : handleCTA}
+                                                                            className="flex items-center gap-4 hover:bg-white/[0.04] transition-colors cursor-pointer group overflow-hidden px-[20px] md:px-[42px] py-3"
                                                                         >
-                                                                            <Play size={16} className={`shrink-0 ${vid.isSample ? 'text-text-primary opacity-80' : 'text-text-muted opacity-40'}`} />
+                                                                            <Play size={16} className={`text-text-muted opacity-40 ${vid.isSample ? 'text-blue-400' : ''}`} />
                                                                             <div className="flex-1 min-w-0">
-                                                                                <div className={`text-sm font-medium leading-tight ${vid.isSample ? 'text-text-primary' : 'text-text-muted group-hover:text-text-secondary transition-colors'}`}>
+                                                                                <div className="text-sm font-medium leading-tight text-text-muted group-hover:text-text-secondary transition-colors flex items-center gap-2">
                                                                                     {vid.title}
+                                                                                    {vid.isSample && (
+                                                                                        <span className="px-1.5 py-0.5 rounded-[4px] bg-blue-400/10 text-[9px] font-bold text-blue-400 uppercase tracking-tighter">Preview</span>
+                                                                                    )}
                                                                                 </div>
                                                                             </div>
                                                                             <div
                                                                                 className="flex items-center gap-4 text-sm tabular-nums font-medium shrink-0"
                                                                                 style={{ marginLeft: 'auto', width: '8rem', justifyContent: 'flex-end', textAlign: 'right' }}
                                                                             >
-                                                                                {vid.isSample && (
-                                                                                    <span className="px-2 py-0.5 rounded bg-primary/10 text-primary text-[10px] font-black uppercase">Free</span>
-                                                                                )}
                                                                                 <span className="text-text-muted opacity-60 min-w-[40px]">{formatDuration(vid.duration)}</span>
+                                                                                {!vid.isSample && !isEnrolled && <Lock size={12} className="text-text-muted opacity-30" />}
                                                                             </div>
                                                                         </div>
                                                                     ))}
 
-                                                                    {/* 2. PYQ Practice */}
-                                                                    {lesson.pyqs && (
-                                                                        <div
-                                                                            className="flex items-center gap-4 hover:bg-white/[0.04] transition-colors cursor-pointer group opacity-60"
-                                                                            style={{ paddingTop: '12px', paddingBottom: '12px', paddingLeft: '42px', paddingRight: '42px' }}
-                                                                        >
-                                                                            <FileText size={16} className="text-text-muted" />
-                                                                            <div className="flex-1">
-                                                                                <div className="text-sm font-medium text-text-muted italic">PYQ Practice Available</div>
-                                                                            </div>
+                                                                    {/* 2. PYQ Practice - only show FREE sample PYQs individually, show summary for paid ones */}
+                                                                    {lesson.pyqs?.length > 0 && (
+                                                                        <div className="flex flex-col">
+                                                                            {/* Main row */}
                                                                             <div
-                                                                                className="text-sm text-text-muted font-medium shrink-0"
-                                                                                style={{ marginLeft: 'auto', width: '8rem', textAlign: 'right' }}
+                                                                                onClick={lesson.pyqs.some((p: any) => p.isSample) ? undefined : handleCTA}
+                                                                                className={`flex items-center gap-4 transition-colors cursor-pointer group px-[20px] md:px-[42px] py-[10px] ${lesson.pyqs.some((p: any) => p.isSample) ? 'cursor-default' : 'hover:bg-white/[0.04] opacity-80'}`}
                                                                             >
-                                                                                Solved Questions
+                                                                                <FileText size={15} className="text-text-muted opacity-40" />
+                                                                                <div className="flex-1 min-w-0">
+                                                                                    <div className="text-sm font-bold text-primary group-hover:text-primary-cyan transition-colors flex items-center gap-2">
+                                                                                        {lesson.pyqs.length} PYQs available
+                                                                                        {lesson.pyqs.some((p: any) => p.isSample) && (
+                                                                                            <span className="px-1.5 py-0.5 rounded-[4px] bg-primary-cyan/10 text-[9px] font-bold text-primary-cyan uppercase tracking-tighter shadow-[0_0_10px_rgba(var(--color-primary-rgb),0.1)]">Samples Included</span>
+                                                                                        )}
+                                                                                    </div>
+                                                                                </div>
+                                                                                {!lesson.pyqs.some((p: any) => p.isSample) && !isEnrolled && (
+                                                                                    <div className="shrink-0" style={{ width: '8rem', textAlign: 'right' }}>
+                                                                                        <Lock size={12} className="text-text-muted opacity-30 inline" />
+                                                                                    </div>
+                                                                                )}
                                                                             </div>
+
+                                                                            {/* Individual sample chips if guest */}
+                                                                            {!isEnrolled && lesson.pyqs.some((p: any) => p.isSample) && (
+                                                                                <div className="flex flex-wrap gap-2 px-[20px] md:px-[42px] pb-4 pl-[45px] md:pl-[75px]">
+                                                                                    {lesson.pyqs.filter((p: any) => p.isSample).map((p: any) => (
+                                                                                        <button 
+                                                                                            key={p.id}
+                                                                                            onClick={() => { setActivePyq(p); setIsPyqModalOpen(true); }}
+                                                                                            className="px-3 py-1.5 rounded-lg bg-primary-cyan/5 border border-primary-cyan/20 hover:bg-primary-cyan/10 hover:border-primary-cyan/40 text-[10px] font-bold text-primary-cyan transition-all flex items-center gap-2 group/btn"
+                                                                                        >
+                                                                                            <Play size={10} className="fill-current opacity-40 group-hover/btn:opacity-100" />
+                                                                                            Preview Sample
+                                                                                        </button>
+                                                                                    ))}
+                                                                                </div>
+                                                                            )}
                                                                         </div>
                                                                     )}
 
                                                                     {/* 3. Lesson Quiz */}
                                                                     {lesson.quiz && (
                                                                         <div
-                                                                            className="flex items-center gap-4 hover:bg-white/[0.04] transition-colors cursor-pointer group opacity-60"
-                                                                            style={{ paddingTop: '12px', paddingBottom: '12px', paddingLeft: '42px', paddingRight: '42px' }}
+                                                                            className="flex items-center gap-4 hover:bg-white/[0.04] transition-colors cursor-pointer group opacity-60 px-[20px] md:px-[42px] py-3"
                                                                         >
                                                                             <HelpCircle size={16} className="text-text-muted" />
                                                                             <div className="flex-1">
@@ -479,13 +601,6 @@ const CourseDetailPage: React.FC = () => {
                                         {isExpired ? 'RENEW ACCESS' : (isEnrolled ? 'ENTER PLAYER' : (course.pricingType === 'free' ? 'GET ACCESS' : 'Enroll Now'))}
                                     </Button>
 
-                                    {/* Secondary CTA */}
-                                    <button
-                                        onClick={() => setIsViewingPromo(true)}
-                                        className="w-full h-14 rounded-xl bg-white/5 border border-white/10 text-[15px] font-bold text-text-secondary hover:bg-white/10 hover:text-white transition-all"
-                                    >
-                                        Try Free Preview
-                                    </button>
 
                                     {/* Course includes */}
                                     <div className="w-full border-t border-white/5 pt-6 space-y-4">
@@ -528,10 +643,10 @@ const CourseDetailPage: React.FC = () => {
                     padding: '12px 20px',
                     boxShadow: '0 -8px 32px rgba(0,0,0,0.4)',
                     boxSizing: 'border-box',
-                    maxWidth: '100vw',
+                    maxWidth: '100%',
                     overflow: 'hidden'
                 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '16px', maxWidth: '1100px', margin: '0 auto', width: '100%' }}>
+                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px', maxWidth: '1100px', margin: '0 auto', width: '100%' }}>
                         {course.pricingType !== 'free' && (
                             <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px', flexShrink: 0 }}>
                                 <span style={{ fontSize: '24px', fontWeight: 800, color: '#fff', fontFamily: 'Reddit Sans, sans-serif', lineHeight: 1 }}>{formatPrice(course.basePrice, course.currency)}</span>
@@ -549,6 +664,14 @@ const CourseDetailPage: React.FC = () => {
                 </div>,
                 document.body
             )}
+            {/* PYQ Preview Modal */}
+            <PYQPreviewModal 
+                isOpen={isPyqModalOpen}
+                onClose={() => { setIsPyqModalOpen(false); setActivePyq(null); }}
+                activePyq={activePyq}
+                isEnrolled={isEnrolled}
+                onUnlock={() => { setIsPyqModalOpen(false); handleCTA(); }}
+            />
 
         </>
     );

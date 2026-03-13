@@ -13,6 +13,7 @@ const Footer: React.FC = () => {
                     <h4 className="font-bold text-text-primary mb-4">Platform</h4>
                     <ul className="footer-list space-y-2">
                         <li><Link to="/discovery" className="footer-link hover:text-brand-primary">Courses</Link></li>
+                        <li><Link to="/blog" className="footer-link hover:text-brand-primary">Blog</Link></li>
                         <li><Link to="/discovery" className="footer-link hover:text-brand-primary">Pricing</Link></li>
                         <li><Link to="/login" className="footer-link hover:text-brand-primary">Login</Link></li>
                     </ul>

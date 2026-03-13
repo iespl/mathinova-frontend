@@ -30,6 +30,9 @@ export const adminApi = {
     reorderLessons: (lessonIdOrders: { id: string, moduleId: string, order: number }[]) => api.patch('/admin/reorder/lessons', { lessonIdOrders }),
     reorderVideos: (videoIdOrders: { id: string, lessonId: string, order: number }[]) => api.patch('/admin/reorder/videos', { videoIdOrders }),
     reorderPYQs: (pyqIdOrders: { id: string, lessonId: string, order: number }[]) => api.patch('/admin/reorder/pyqs', { pyqIdOrders }),
+    createPYQ: (lessonId: string, data: any) => api.post(`/admin/lessons/${lessonId}/pyqs`, data),
+    updatePYQ: (id: string, data: any) => api.put(`/admin/pyqs/${id}`, data),
+    deletePYQ: (id: string) => api.delete(`/admin/pyqs/${id}`),
     reorderQuizQuestions: (questionIdOrders: { id: string, quizId: string, order: number }[]) => api.patch('/admin/reorder/quiz-questions', { questionIdOrders }),
 
     // Branches

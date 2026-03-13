@@ -55,6 +55,11 @@
   --card-thumbnail-gap: 8px;
   --card-title-gap: 4px;
   --card-row-gap: 8px;
+
+  /* Responsive Button Paddings (Internal Use) */
+  --btn-px-sm: 1.25rem;
+  --btn-px-md: 1.75rem;
+  --btn-px-lg: 2.25rem;
 }
 
 /* Light Theme Overrides */
@@ -78,6 +83,9 @@
   --border-glass-bright: rgba(0, 0, 0, 0.15);
   --bg-glass-card: rgba(255, 255, 255, 0.9);
   /* More opaque in light mode for clarity */
+
+  --btn-px-sm: 1rem;
+  --btn-px-md: 1.5rem;
 }
 
 /* Course Card Specific Styles */
@@ -116,6 +124,7 @@
 
 html {
   height: 100%;
+  overflow-x: hidden; /* Global safety against right-side clipping */
 }
 
 body {
@@ -125,6 +134,7 @@ body {
   -webkit-font-smoothing: antialiased;
   min-height: 100vh;
   width: 100%;
+  overflow-x: hidden; /* Global safety against right-side clipping */
   line-height: var(--ui-line-height-standard);
   transition: var(--theme-transition);
 }
@@ -179,6 +189,37 @@ h4,
   }
 }
 
+@media (max-width: 400px) {
+  .container {
+    padding: 0 12px; /* Extra room for small devices like iPhone SE */
+  }
+  
+  :root {
+    --btn-px-sm: 0.75rem;
+    --btn-px-md: 1.25rem;
+    --btn-px-lg: 1.75rem;
+  }
+}
+
+/* Custom Scrollbar Utility */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 10px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
 /* Course Detail Page — extra bottom padding on mobile to clear sticky bar */
 @media (max-width: 768px) {
   .course-detail-wrap {
@@ -201,7 +242,7 @@ h4,
     display: flex;
     flex-direction: row;
     align-items: center;
-    width: 100vw;
+    width: 100%; /* Changed from 100vw to prevent scrollbar-induced overflow */
     box-sizing: border-box;
     overflow: hidden;
   }
@@ -401,8 +442,8 @@ h4,
 
 /* Base logo settings (mobile) */
 .logo-img {
-  height: 38px !important;
-  width: 80px !important;
+  height: 32px !important; /* Slightly smaller for 375px safety */
+  width: 68px !important;
   object-fit: contain;
   object-position: center;
 }

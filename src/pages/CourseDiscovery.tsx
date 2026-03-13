@@ -76,6 +76,11 @@ const CourseDiscovery: React.FC = () => {
         }
 
         return matchesSearch && matchesStream;
+    }).sort((a, b) => {
+        const PINNED_COURSE_ID = '533694f6-1f9f-4d24-b265-daaf1399910c';
+        if (a.id === PINNED_COURSE_ID) return -1;
+        if (b.id === PINNED_COURSE_ID) return 1;
+        return 0; // Maintain original database order for remaining courses
     });
 
     return (

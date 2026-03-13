@@ -5,19 +5,28 @@ import 'katex/dist/katex.min.css';
 interface RichTextDisplayProps {
     htmlContent: string;
     className?: string;
+    style?: React.CSSProperties;
+    fullWidthImages?: boolean;
 }
 
-const RichTextDisplay: React.FC<RichTextDisplayProps> = ({ htmlContent, className = '' }) => {
+const RichTextDisplay: React.FC<RichTextDisplayProps> = ({ 
+    htmlContent, 
+    className = '', 
+    style,
+    fullWidthImages = false 
+}) => {
+    // Generate a unique ID for this instance to scope the styles
+    const instanceId = useMemo(() => `rt-${Math.random().toString(36).substr(2, 9)}`, []);
+
     const processedHtml = useMemo(() => {
         if (!htmlContent) return '';
 
         let content = htmlContent;
 
-        // 1. Sanitize non-breaking spaces that cause clipping/wrapping issues
+        // 1. Sanitize non-breaking spaces
         content = content.replace(/&nbsp;/g, ' ').replace(/\u00A0/g, ' ');
 
         // 2. Convert standard math delimiters
-        // Display math $$...$$ or \[...\]
         content = content.replace(/\$\$([\s\S]+?)\$\$/g, (match, formula) => {
             try {
                 return katex.renderToString(formula, { throwOnError: false, displayMode: true });
@@ -35,8 +44,6 @@ const RichTextDisplay: React.FC<RichTextDisplayProps> = ({ htmlContent, classNam
         });
 
         // 3. Convert Quill formula spans
-        // These often contain pre-rendered KaTeX with nested spans (e.g. <span><span>...</span></span>).
-        // We match the opening ql-formula tag and then consume all content including nested closing spans.
         content = content.replace(/<span[^>]*class=["'][^"']*ql-formula[^"']*["'][^>]*data-value=["']([^"']+)["'][^>]*>[\s\S]*?<\/span>(\s*<\/span>)*/g, (match, formula) => {
             try {
                 let decodedFormula = formula.replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"');
@@ -46,7 +53,7 @@ const RichTextDisplay: React.FC<RichTextDisplayProps> = ({ htmlContent, classNam
             }
         });
 
-        // 4. Convert raw inline math $...$ or \(...\)
+        // 4. Convert raw inline math
         content = content.replace(/\$((?:[^$]|\\\$)+?)\$/g, (match, formula) => {
             try {
                 return katex.renderToString(formula, { throwOnError: false, displayMode: false });
@@ -67,74 +74,64 @@ const RichTextDisplay: React.FC<RichTextDisplayProps> = ({ htmlContent, classNam
     }, [htmlContent]);
 
     return (
-        <div className={`rich-text-content prose prose-sm dark:prose-invert ${className}`}>
+        <div 
+            id={instanceId} 
+            className={`rich-text-content ${className}`} 
+            style={{ 
+                ...style, 
+                boxSizing: 'border-box',
+                maxWidth: '100%',
+                overflowX: 'auto', // Allow internal scrolling for wide math without pushing parent
+                wordBreak: 'break-word'
+            }}
+        >
             <style>{`
-                .rich-text-content {
-                    /* Explicitly override Tailwind's prose word-breaking */
-                    word-break: normal !important;
-                    overflow-wrap: break-word !important;
+                #${instanceId} * {
+                    box-sizing: border-box !important;
                 }
-                .rich-text-content h1, 
-                .rich-text-content h2, 
-                .rich-text-content h3, 
-                .rich-text-content h4, 
-                .rich-text-content h5, 
-                .rich-text-content p,
-                .rich-text-content li {
-                    word-break: normal !important;
-                    overflow-wrap: break-word !important;
-                    hyphens: none !important;
+                #${instanceId} p,
+                #${instanceId} div {
+                    max-width: 100% !important;
+                    margin: 0 0 0.5em 0 !important;
+                    box-sizing: border-box !important;
                 }
-                .rich-text-content p,
-                .rich-text-content div {
-                    max-width: 100%;
-                    margin-top: 0 !important;
-                    margin-bottom: 0 !important;
+                #${instanceId} img {
+                    display: block !important;
+                    margin: ${fullWidthImages ? '12px -20px' : '12px 0'} !important;
+                    border-radius: ${fullWidthImages ? '0' : '8px'};
+                    height: auto !important;
+                    width: ${fullWidthImages ? 'calc(100% + 40px)' : 'auto'} !important;
+                    max-width: ${fullWidthImages ? 'calc(100% + 40px)' : '100%'} !important;
+                    object-fit: contain !important;
                 }
-                .rich-text-content p:empty, 
-                .rich-text-content p > br:only-child {
-                    display: none !important;
+                @media (min-width: 768px) {
+                    #${instanceId} img {
+                        margin: ${fullWidthImages ? '20px -60px' : '12px 0'} !important;
+                        width: ${fullWidthImages ? 'calc(100% + 120px)' : 'auto'} !important;
+                        max-width: ${fullWidthImages ? 'calc(100% + 120px)' : '100%'} !important;
+                    }
                 }
-                /* Definitively hide KaTeX duplicates/fallbacks */
-                .katex-mathml,
-                .katex-html + .katex-html,
-                .katex + .katex-html,
-                .katex ~ .katex-html {
-                    display: none !important;
-                }
-                /* Ensure math equations don't stretch the screen on mobile, but scroll horizontally */
-                .katex-display {
+                #${instanceId} .katex-display {
                     overflow-x: auto !important;
                     overflow-y: hidden !important;
                     max-width: 100% !important;
-                    padding-bottom: 0.5rem;
+                    padding: 0.8rem 0;
+                    margin: 0 !important;
+                    text-align: left !important; /* Align equations to the left */
                 }
-                .katex {
+                #${instanceId} .katex-display > .katex {
+                    text-align: left !important;
                     white-space: normal !important;
                 }
-                .rich-text-content img {
-                    max-width: 100% !important;
-                    width: 100% !important; /* Ensure images take full width of container */
-                    height: auto !important;
-                    border-radius: 0 !important; /* Remove rounding for seamless slices */
-                    margin: 0 auto !important; /* Zero margin to remove all gaps */
-                    display: block !important;
+                #${instanceId} .katex-mathml {
+                    display: none !important;
                 }
-                .katex-display {
-                    overflow-x: auto;
-                    overflow-y: hidden;
-                    padding-bottom: 0.5rem;
-                    padding-top: 0.5rem;
-                }
-                /* Optional for inline katex to prevent overflow */
-                .katex {
-                    white-space: normal;
-                }
+                #${instanceId} strong { font-weight: 700; }
+                #${instanceId} em { font-style: italic; }
             `}</style>
-            <div dangerouslySetInnerHTML={{ __html: processedHtml }} />
+            <div dangerouslySetInnerHTML={{ __html: processedHtml }} style={{ maxWidth: '100%', boxSizing: 'border-box' }} />
         </div>
     );
 };
 
 export default RichTextDisplay;
-

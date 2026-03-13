@@ -11,6 +11,7 @@ const AdminLayout: React.FC = () => {
         { label: 'Users', path: '/admin/users' },
         { label: 'Courses', path: '/admin/courses' },
         { label: 'Branches', path: '/admin/branches' },
+        { label: 'Blogs', path: '/admin/blogs' },
     ];
 
     return (

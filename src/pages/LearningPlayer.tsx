@@ -5,7 +5,9 @@ import GlassCard from '../components/GlassCard.js';
 import VideoPlayer from '../components/VideoPlayer.js';
 import QuizInterface from '../components/QuizInterface.js';
 import PYQList from '../components/PYQList.js';
-import { CheckCircle, Lock, PlayCircle, ClipboardList, HelpCircle, Check, ChevronRight, BookOpen, Play, FileText } from 'lucide-react';
+import PYQPreviewModal from '../components/PYQPreviewModal.js';
+import { createPortal } from 'react-dom';
+import { CheckCircle, Lock, PlayCircle, ClipboardList, HelpCircle, Check, ChevronRight, BookOpen, Play, FileText, X, Library } from 'lucide-react';
 import ExpiredAccessScreen from '../components/ExpiredAccessScreen.js';
 
 const LearningPlayer: React.FC = () => {
@@ -18,6 +20,9 @@ const LearningPlayer: React.FC = () => {
     const [isExpired, setIsExpired] = useState(false);
     const [expiryDate, setExpiryDate] = useState<string | null>(null);
     const [expandedModuleId, setExpandedModuleId] = useState<string | null>(null);
+    const [isPyqListModalOpen, setIsPyqListModalOpen] = useState(false);
+    const [isPyqPreviewOpen, setIsPyqPreviewOpen] = useState(false);
+    const [activePyq, setActivePyq] = useState<any>(null);
     const lastUpdateRef = useRef<number>(0);
     const playerRef = useRef<HTMLDivElement>(null);
 
@@ -111,6 +116,18 @@ const LearningPlayer: React.FC = () => {
         }
     }, [activeLesson?.id, activeVideo?.id, expandedModuleId]);
 
+    // Handle body scroll lock for PYQ List Modal
+    useEffect(() => {
+        if (isPyqListModalOpen || isPyqPreviewOpen) {
+            document.body.style.overflow = 'hidden';
+        } else {
+            document.body.style.overflow = 'unset';
+        }
+        return () => {
+            document.body.style.overflow = 'unset';
+        };
+    }, [isPyqListModalOpen, isPyqPreviewOpen]);
+
     const handleVideoProgress = React.useCallback(async (currentTime: number) => {
         if (!activeLesson || !activeVideo) return;
 
@@ -142,9 +159,6 @@ const LearningPlayer: React.FC = () => {
 
     if (isLoading) return <div className="p-20 text-center text-primary animate-pulse">Loading Mathinova Classroom...</div>;
     if (!course) return <div className="p-20 text-center text-red-400">Course not found.</div>;
-
-
-
 
     return (
         <div className="min-h-screen bg-bg-surface text-text-primary">
@@ -180,8 +194,6 @@ const LearningPlayer: React.FC = () => {
                                     quiz={activeLesson.quiz}
                                     onComplete={() => fetchCourseDetails()}
                                 />
-                            ) : viewMode === 'pyq' && activeLesson?.pyqs ? (
-                                <PYQList pyqs={activeLesson.pyqs} />
                             ) : (
                                 <div className="aspect-video relative overflow-hidden flex items-center justify-center bg-bg-surface-2 bg-glow-subtle border border-border-default rounded-2xl">
                                     <div className="text-center p-12">
@@ -213,14 +225,9 @@ const LearningPlayer: React.FC = () => {
                         </div>
 
                         {/* Accordion List */}
-                        <div className="flex flex-col divide-y divide-black/10 overflow-y-auto max-h-[calc(100vh-250px)] custom-scrollbar">
+                    <div className="flex flex-col divide-y divide-black/10 overflow-y-auto max-h-[calc(100vh-250px)] custom-scrollbar">
                             {course.modules?.map((mod: any, modIdx: number) => {
                                 const isExpanded = expandedModuleId === mod.id || (!expandedModuleId && mod.lessons?.some((l: any) => l.id === activeLesson?.id));
-                                const getOrdinal = (n: number) => {
-                                    const s = ["th", "st", "nd", "rd"], v = n % 100;
-                                    return n + (s[(v - 20) % 10] || s[v] || s[0]);
-                                };
-
                                 return (
                                     <div key={mod.id} className="flex flex-col">
                                         {/* Module Header (Accordion Trigger) */}
@@ -240,7 +247,6 @@ const LearningPlayer: React.FC = () => {
                                                 {mod.lessons?.map((lsn: any) => {
                                                     const isLsnActive = activeLesson?.id === lsn.id;
                                                     const progress = lsn.progress?.[0];
-                                                    const isCompleted = progress?.completed;
 
                                                     return (
                                                         <div key={lsn.id} className="flex flex-col border-b border-black/5 last:border-0 pl-1">
@@ -276,14 +282,18 @@ const LearningPlayer: React.FC = () => {
                                                                         );
                                                                     })}
 
-                                                                    {/* 2. PYQ Practice */}
+                                                                    {/* 2. PYQ Practice - Open as Modal */}
                                                                     {lsn.pyqs?.length > 0 && (
                                                                         <div
-                                                                            onClick={(e) => { e.stopPropagation(); setViewMode('pyq'); setActiveLesson(lsn); }}
-                                                                            className={`flex items-center justify-between py-3 group cursor-pointer ${viewMode === 'pyq' && isLsnActive ? 'text-primary' : 'text-text-secondary hover:text-text-primary'}`}
+                                                                            onClick={(e) => { 
+                                                                                e.stopPropagation(); 
+                                                                                setActiveLesson(lsn);
+                                                                                setIsPyqListModalOpen(true);
+                                                                            }}
+                                                                            className={`flex items-center justify-between py-3 group cursor-pointer ${isPyqListModalOpen && activeLesson?.id === lsn.id ? 'text-primary' : 'text-text-secondary hover:text-text-primary'}`}
                                                                         >
                                                                             <div className="flex items-center gap-2.5">
-                                                                                <FileText className={`w-3.5 h-3.5 ${viewMode === 'pyq' && isLsnActive ? 'text-primary' : 'text-text-muted opacity-60'}`} />
+                                                                                <FileText className={`w-3.5 h-3.5 ${isPyqListModalOpen && activeLesson?.id === lsn.id ? 'text-primary' : 'text-text-muted opacity-60'}`} />
                                                                                 <span className="text-[11px] font-bold tracking-tight uppercase">PYQ Practice</span>
                                                                             </div>
                                                                         </div>
@@ -315,6 +325,74 @@ const LearningPlayer: React.FC = () => {
                     </div>
                 </div>
             </div>
+
+            {/* PYQ List Modal Overlay */}
+            {isPyqListModalOpen && activeLesson && createPortal(
+                <div 
+                    className="fixed inset-0 overflow-y-auto z-[999] custom-scrollbar"
+                    style={{ 
+                        background: '#05050A', 
+                        position: 'fixed'
+                    }}
+                    onClick={() => setIsPyqListModalOpen(false)}
+                >
+                    {/* Centering wrapper with Navbar offset */}
+                    <div className="flex justify-center min-h-screen pt-[80px]">
+                        <div 
+                            className="relative w-full max-w-[1100px] bg-[#0D0D15] shadow-2xl flex flex-col animate-in slide-in-from-bottom-8 duration-500"
+                            style={{ 
+                                borderLeft: '1px solid rgba(255,255,255,0.08)',
+                                borderRight: '1px solid rgba(255,255,255,0.08)',
+                                minHeight: 'calc(100vh - 80px)'
+                            }}
+                            onClick={e => e.stopPropagation()}
+                        >
+                            {/* Modal header - Sticky at top of the scrollable drawer */}
+                            <div className="sticky top-0 flex items-center justify-between px-8 py-6 border-b border-white/[0.08] bg-[#0D0D15]/95 backdrop-blur-xl z-[30]">
+                                <div className="flex items-center gap-4">
+                                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/20 text-primary border border-primary/20 shadow-[0_0_15px_rgba(var(--color-primary-rgb),0.2)]">
+                                        <Library size={20} />
+                                    </div>
+                                    <div>
+                                        <h3 className="text-xl font-black text-text-primary uppercase tracking-tight leading-none mb-1">Resource Library</h3>
+                                        <p className="text-xs text-text-muted font-bold uppercase tracking-widest opacity-70">Topic: {activeLesson.title}</p>
+                                    </div>
+                                </div>
+                                <button
+                                    onClick={() => setIsPyqListModalOpen(false)}
+                                    className="group h-12 w-12 flex items-center justify-center text-text-muted hover:text-white transition-all rounded-full hover:bg-white/10 border border-white/5 hover:border-white/20"
+                                >
+                                    <span className="text-4xl font-light leading-none group-hover:rotate-90 transition-transform">&times;</span>
+                                </button>
+                            </div>
+
+                            {/* Modal body - Directly Flowing */}
+                            <div className="p-8 md:p-10 pb-32">
+                                <PYQList 
+                                    pyqs={activeLesson.pyqs} 
+                                    onSelectPyq={(pyq) => {
+                                        setActivePyq(pyq);
+                                        setIsPyqPreviewOpen(true);
+                                    }}
+                                />
+                            </div>
+                        </div>
+                    </div>
+                </div>,
+                document.body
+            )}
+
+            {/* PYQ Individual Preview Modal */}
+            <PYQPreviewModal 
+                isOpen={isPyqPreviewOpen}
+                onClose={() => {
+                    setIsPyqPreviewOpen(false);
+                    setActivePyq(null);
+                }}
+                activePyq={activePyq}
+                isEnrolled={true} 
+                onUnlock={() => setIsPyqPreviewOpen(false)}
+            />
         </div>
     );
 };

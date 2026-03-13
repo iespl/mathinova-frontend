@@ -42,6 +42,7 @@ const LessonEditor: React.FC<LessonEditorProps> = ({ lesson, onClose, onUpdate, 
     const [editableTitle, setEditableTitle] = useState(lesson.title);
     const [isSaving, setIsSaving] = useState(false);
     const [activeTab, setActiveTab] = useState<'videos' | 'pyqs' | 'quiz'>(initialTab);
+    const [expandedPyq, setExpandedPyq] = useState<number | null>(null);
     const [confirmConfig, setConfirmConfig] = useState<{
         isOpen: boolean;
         title: string;
@@ -82,7 +83,7 @@ const LessonEditor: React.FC<LessonEditorProps> = ({ lesson, onClose, onUpdate, 
             message: 'Are you sure you want to remove this video from the lesson?',
             onConfirm: () => {
                 setVideos(videos.filter((_, i) => i !== index));
-                setConfirmConfig(prev => ({ ...prev, isOpen: false })); // Close modal after action
+                setConfirmConfig(prev => ({ ...prev, isOpen: false }));
             }
         });
     };
@@ -99,13 +100,17 @@ const LessonEditor: React.FC<LessonEditorProps> = ({ lesson, onClose, onUpdate, 
 
     // PYQ Handlers
     const handleAddPyq = () => {
+        const newIndex = pyqs.length;
         setPyqs([...pyqs, {
+            id: `new-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
             questionText: '',
             answerText: '',
             solutionVideoUrl: '',
-            order: pyqs.length,
+            order: newIndex,
+            isSample: false,
             occurrences: [{ year: new Date().getFullYear(), month: 'June', courseCode: '', part: 'Part-A' }]
         }]);
+        setExpandedPyq(newIndex);
     };
 
     const handlePyqChange = (index: number, field: string, value: any) => {
@@ -142,7 +147,8 @@ const LessonEditor: React.FC<LessonEditorProps> = ({ lesson, onClose, onUpdate, 
             message: 'Are you sure you want to remove this PYQ from the lesson?',
             onConfirm: () => {
                 setPyqs(pyqs.filter((_, i) => i !== index));
-                setConfirmConfig(prev => ({ ...prev, isOpen: false })); // Close modal after action
+                if (expandedPyq === index) setExpandedPyq(null);
+                setConfirmConfig(prev => ({ ...prev, isOpen: false }));
             }
         });
     };
@@ -151,8 +157,8 @@ const LessonEditor: React.FC<LessonEditorProps> = ({ lesson, onClose, onUpdate, 
         const { active, over } = event;
         if (!over || active.id === over.id) return;
 
-        const oldIndex = pyqs.findIndex((p: any) => (p.id || `pyq-${pyqs.indexOf(p)}`) === active.id);
-        const newIndex = pyqs.findIndex((p: any) => (p.id || `pyq-${pyqs.indexOf(p)}`) === over.id);
+        const oldIndex = pyqs.findIndex((p: any) => p.id === active.id);
+        const newIndex = pyqs.findIndex((p: any) => p.id === over.id);
 
         setPyqs(arrayMove(pyqs, oldIndex, newIndex).map((p: any, idx: number) => ({ ...p, order: idx })));
     };
@@ -171,6 +177,28 @@ const LessonEditor: React.FC<LessonEditorProps> = ({ lesson, onClose, onUpdate, 
         setPyqs(sorted.map((p, idx) => ({ ...p, order: idx })));
     };
 
+    const handleSaveSinglePyq = async (index: number): Promise<boolean> => {
+        const pyq = pyqs[index];
+        const isNew = pyq.id && pyq.id.startsWith('new-');
+        try {
+            if (pyq.id && !isNew) {
+                await adminApi.updatePYQ(pyq.id, pyq);
+            } else {
+                // Do not send the temporary 'new-' ID to the backend
+                const { id, ...pyqData } = pyq;
+                const response = await adminApi.createPYQ(lesson.id, pyqData);
+                const createdPyq = response.data;
+                const newPyqs = [...pyqs];
+                newPyqs[index] = createdPyq;
+                setPyqs(newPyqs);
+            }
+            return true;
+        } catch (error) {
+            console.error('Error saving PYQ:', error);
+            return false;
+        }
+    };
+
     // Quiz Handlers
     const handleToggleQuiz = () => {
         if (quiz) {
@@ -180,13 +208,14 @@ const LessonEditor: React.FC<LessonEditorProps> = ({ lesson, onClose, onUpdate, 
                 message: 'Would you really like to delete this quiz? All questions will be lost. This operation cannot be reversed.',
                 onConfirm: () => {
                     setQuiz(null);
-                    setConfirmConfig(prev => ({ ...prev, isOpen: false })); // Close modal after action
+                    setConfirmConfig(prev => ({ ...prev, isOpen: false }));
                 }
             });
         } else {
-            setQuiz({ title: lesson.title + ' Quiz', description: '', isPublished: true, questions: [] });
+            setQuiz({ title: editableTitle + ' Quiz', description: '', isPublished: true, questions: [] });
         }
     };
+
     const handleQuizChange = (field: string, value: any) => {
         setQuiz({ ...quiz, [field]: value });
     };
@@ -220,7 +249,7 @@ const LessonEditor: React.FC<LessonEditorProps> = ({ lesson, onClose, onUpdate, 
             onConfirm: () => {
                 const newQuestions = quiz.questions.filter((_: any, i: number) => i !== qIndex);
                 setQuiz({ ...quiz, questions: newQuestions });
-                setConfirmConfig(prev => ({ ...prev, isOpen: false })); // Close modal after action
+                setConfirmConfig(prev => ({ ...prev, isOpen: false }));
             }
         });
     };
@@ -244,37 +273,45 @@ const LessonEditor: React.FC<LessonEditorProps> = ({ lesson, onClose, onUpdate, 
 
         setIsSaving(true);
         try {
-            // Update Title if changed
             if (editableTitle.trim() !== lesson.title) {
                 await adminApi.updateLesson(lesson.id, { title: editableTitle.trim() });
             }
-
-            // Update Content
             await adminApi.updateLessonContent(lesson.id, { videos, pyqs, quiz });
-
-            await onUpdate();
+            onUpdate();
             onClose();
         } catch (error) {
-            alert('Failed to update lesson');
-            console.error(error);
+            console.error('Error saving lesson:', error);
+            alert('Failed to save lesson');
         } finally {
             setIsSaving(false);
         }
     };
 
     return (
-        <div style={{
-            position: 'fixed', top: 0, left: 0, width: '100%', height: '100%',
-            background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(5px)',
-            zIndex: 100000, display: 'flex', alignItems: 'center', justifyContent: 'center'
-        }}>
-            <GlassCard style={{ width: '95%', maxWidth: '1000px', maxHeight: '95vh', overflowY: 'auto' }}>
-                <div className="flex justify-between items-center mb-6">
-                    <div className="flex-1 mr-4">
-                        <div className="flex items-center gap-2 group">
-                            <h2 className="text-xl font-bold gradient-text whitespace-nowrap">Edit Content:</h2>
+        <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/70 backdrop-blur-md transition-all duration-300" style={{ paddingTop: '80px', paddingBottom: '40px', paddingLeft: '20px', paddingRight: '20px' }}>
+            {/* High-visibility Close Button aligned between logo and logout area (top right of modal space) */}
+            <button
+                onClick={onClose}
+                className="fixed top-24 right-10 z-[70] w-10 h-10 flex items-center justify-center rounded-full bg-white/10 hover:bg-red-500 border-2 border-white/30 text-white transition-all shadow-2xl hover:scale-110 active:scale-95 group"
+                title="Close Editor"
+            >
+                <span className="text-xl font-bold group-hover:rotate-90 transition-transform">✕</span>
+            </button>
+            <GlassCard
+                className="w-full max-w-6xl relative p-4 md:p-10 shadow-[0_0_50px_rgba(0,0,0,0.5)] rounded-2xl"
+                style={{
+                    maxHeight: 'calc(100vh - 120px)',
+                    overflowY: 'auto',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    background: 'white',
+                    color: 'black'
+                }}
+            >
+                <div className="flex justify-between items-start mb-8 border-b border-white/10 pb-6">
+                    <div className="flex-1">
+                        <div className="flex items-center gap-3 mb-1">
                             <input
-                                type="text"
                                 value={editableTitle}
                                 onChange={(e) => setEditableTitle(e.target.value)}
                                 onKeyDown={(e) => {
@@ -376,17 +413,20 @@ const LessonEditor: React.FC<LessonEditorProps> = ({ lesson, onClose, onUpdate, 
                                     modifiers={[restrictToVerticalAxis]}
                                 >
                                     <SortableContext
-                                        items={pyqs.map((p, i) => p.id || `pyq-${i}`)}
+                                        items={pyqs.map((p) => p.id)}
                                         strategy={verticalListSortingStrategy}
                                     >
                                         <div className="space-y-4">
                                             {pyqs.map((pyq, index) => (
                                                 <SortablePYQ
-                                                    key={pyq.id || `pyq-${index}`}
+                                                    key={pyq.id}
                                                     pyq={pyq}
                                                     index={index}
+                                                    isExpanded={expandedPyq === index}
+                                                    onToggle={() => setExpandedPyq(expandedPyq === index ? null : index)}
                                                     onChange={handlePyqChange}
                                                     onRemove={handleRemovePyq}
+                                                    onSave={handleSaveSinglePyq}
                                                     onAddOccurrence={handleAddOccurrence}
                                                     onOccurrenceChange={handleOccurrenceChange}
                                                     onRemoveOccurrence={handleRemoveOccurrence}
@@ -409,72 +449,64 @@ const LessonEditor: React.FC<LessonEditorProps> = ({ lesson, onClose, onUpdate, 
                                 <h3 className="font-semibold text-lg flex items-center gap-2">
                                     <span className="text-purple-400">🧠</span> Lesson Quiz
                                 </h3>
-                                <Button size="sm" variant={quiz ? "glass" : "primary"} onClick={handleToggleQuiz} className="flex items-center gap-2 cursor-pointer">
-                                    {quiz && <img src={TrashIcon} alt="" style={{ width: '14px', height: '14px', opacity: 0.7 }} />}
-                                    {quiz ? "Delete Quiz" : "+ Create Quiz"}
-                                </Button>
+                                <button
+                                    onClick={handleToggleQuiz}
+                                    className={`text-xs px-3 py-1.5 rounded-full border transition-all ${quiz ? 'border-red-500/30 text-red-400 hover:bg-red-500/10' : 'border-blue-500/30 text-blue-400 hover:bg-blue-400/10'}`}
+                                >
+                                    {quiz ? 'Delete Quiz' : '+ Create Quiz'}
+                                </button>
                             </div>
 
                             {quiz ? (
-                                <div className="p-5 bg-blue-500/5 rounded-xl border border-blue-500/20 space-y-6">
-                                    <div className="space-y-4">
-                                        <Input
-                                            label="Quiz Title"
-                                            value={quiz.title}
-                                            onChange={(e) => handleQuizChange('title', e.target.value)}
-                                        />
-                                        <Input
-                                            label="Description (Optional)"
-                                            value={quiz.description || ''}
-                                            onChange={(e) => handleQuizChange('description', e.target.value)}
-                                        />
-                                        <label className="flex items-center gap-2 cursor-pointer">
-                                            <input
-                                                type="checkbox"
-                                                checked={quiz.isPublished !== false}
-                                                onChange={(e) => handleQuizChange('isPublished', e.target.checked)}
+                                <div className="space-y-6">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        <div className="space-y-2">
+                                            <label className="text-sm font-medium text-gray-300">Quiz Title</label>
+                                            <Input
+                                                value={quiz.title}
+                                                onChange={(e) => handleQuizChange('title', e.target.value)}
+                                                placeholder="Mid-term Assessment..."
                                             />
-                                            <span className="text-xs">Published</span>
-                                        </label>
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="text-sm font-medium text-gray-300">Description</label>
+                                            <Input
+                                                value={quiz.description}
+                                                onChange={(e) => handleQuizChange('description', e.target.value)}
+                                                placeholder="Test your knowledge of..."
+                                            />
+                                        </div>
                                     </div>
 
-                                    <div className="pt-4 border-t border-white/10">
-                                        <div className="flex justify-between items-center mb-4">
-                                            <h4 className="text-sm font-medium uppercase tracking-wider text-gray-400">Questions</h4>
-                                            <button
-                                                onClick={handleAddQuestion}
-                                                className="text-xs text-blue-400 hover:text-blue-300 font-semibold"
-                                            >+ Add Question</button>
+                                    <div className="space-y-4">
+                                        <div className="flex justify-between items-center">
+                                            <h4 className="text-sm font-bold text-gray-400 uppercase tracking-widest">Questions ({quiz.questions?.length || 0})</h4>
+                                            <Button size="sm" variant="glass" onClick={handleAddQuestion}>+ Add Question</Button>
                                         </div>
 
-                                        <div className="space-y-4">
-                                            {(!quiz.questions || quiz.questions.length === 0) && (
-                                                <p className="text-gray-500 text-xs italic">No questions added yet.</p>
-                                            )}
-                                            <DndContext
-                                                sensors={sensors}
-                                                collisionDetection={closestCenter}
-                                                onDragEnd={handleDragEndQuestion}
-                                                modifiers={[restrictToVerticalAxis]}
+                                        <DndContext
+                                            sensors={sensors}
+                                            collisionDetection={closestCenter}
+                                            onDragEnd={handleDragEndQuestion}
+                                            modifiers={[restrictToVerticalAxis]}
+                                        >
+                                            <SortableContext
+                                                items={(quiz.questions || []).map((q: any, i: number) => q.id || `question-${i}`)}
+                                                strategy={verticalListSortingStrategy}
                                             >
-                                                <SortableContext
-                                                    items={(quiz.questions || []).map((q: any, i: number) => q.id || `question-${i}`)}
-                                                    strategy={verticalListSortingStrategy}
-                                                >
-                                                    <div className="space-y-4">
-                                                        {(quiz.questions || []).map((q: any, qIdx: number) => (
-                                                            <SortableQuestion
-                                                                key={q.id || `question-${qIdx}`}
-                                                                question={q}
-                                                                index={qIdx}
-                                                                onChange={handleQuestionChange}
-                                                                onRemove={handleRemoveQuestion}
-                                                            />
-                                                        ))}
-                                                    </div>
-                                                </SortableContext>
-                                            </DndContext>
-                                        </div>
+                                                <div className="space-y-4">
+                                                    {(quiz.questions || []).map((q: any, qIdx: number) => (
+                                                        <SortableQuestion
+                                                            key={q.id || `question-${qIdx}`}
+                                                            question={q}
+                                                            index={qIdx}
+                                                            onChange={handleQuestionChange}
+                                                            onRemove={handleRemoveQuestion}
+                                                        />
+                                                    ))}
+                                                </div>
+                                            </SortableContext>
+                                        </DndContext>
                                     </div>
                                 </div>
                             ) : (
@@ -495,7 +527,6 @@ const LessonEditor: React.FC<LessonEditorProps> = ({ lesson, onClose, onUpdate, 
                     <Button isLoading={isSaving} onClick={handleSave}>Save Changes</Button>
                 </div>
             </GlassCard>
-            {/* Confirmation Modal */}
             <ConfirmModal
                 isOpen={confirmConfig.isOpen}
                 title={confirmConfig.title}

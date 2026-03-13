@@ -94,9 +94,15 @@ const LandingPage: React.FC = () => {
             filtered = courses.filter(course => course.branch === selectedStream);
         }
 
-        // Sort by latest (createdAt desc) and limit to 4
+        // Pin "Advanced Structural Dynamics" to the very first position
+        const PINNED_COURSE_ID = '533694f6-1f9f-4d24-b265-daaf1399910c';
+
         return filtered
-            .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+            .sort((a, b) => {
+                if (a.id === PINNED_COURSE_ID) return -1;
+                if (b.id === PINNED_COURSE_ID) return 1;
+                return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+            })
             .slice(0, 4);
     }, [selectedStream, courses]);
 

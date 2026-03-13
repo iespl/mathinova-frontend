@@ -31,7 +31,9 @@ const Navbar: React.FC = () => {
             backgroundColor: 'var(--bg-glass)',
             borderBottom: '1px solid var(--border-glass)',
             padding: '0.65rem 0',
-            transition: 'var(--theme-transition)'
+            transition: 'var(--theme-transition)',
+            width: '100%',
+            boxSizing: 'border-box'
         }}>
             <div className="container" style={{
                 display: 'flex',
@@ -54,8 +56,8 @@ const Navbar: React.FC = () => {
                     style={{
                         display: 'flex',
                         alignItems: 'center',
-                        gap: '4px',
-                        flexShrink: 0
+                        gap: typeof window !== 'undefined' && window.innerWidth < 400 ? '2px' : '4px',
+                        flexShrink: 1
                     }}
                 >
                     <ThemeToggle />
@@ -64,6 +66,9 @@ const Navbar: React.FC = () => {
                         <>
                             <Link to="/dashboard" style={{ color: 'var(--text-secondary)', textDecoration: 'none', fontWeight: '500' }} className="hidden md:block hover:text-white transition-colors">
                                 Dashboard
+                            </Link>
+                            <Link to="/blog" style={{ color: 'var(--text-secondary)', textDecoration: 'none', fontWeight: '500' }} className="hidden md:block hover:text-white transition-colors">
+                                Blog
                             </Link>
                             <div style={{ width: '1px', height: '20px', backgroundColor: 'var(--border-glass)' }} className="hidden md:block" />
                             <div style={{ display: 'flex', alignItems: 'center', gap: 'inherit' }}>

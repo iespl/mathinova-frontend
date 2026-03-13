@@ -57,7 +57,7 @@ const BlogPostDisplay: React.FC = () => {
     }
 
     return (
-        <div className="min-h-screen py-24 md:py-32 overflow-x-hidden w-full max-w-[100vw]">
+        <div className="min-h-screen py-24 md:py-32 overflow-x-hidden w-full max-w-full">
             <article className="w-full">
                 <div className="container">
                     <Link to="/blog" className="inline-flex items-center gap-2 text-text-secondary hover:text-brand-primary transition-colors mb-8 group">

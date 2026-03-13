@@ -32,9 +32,11 @@ const MarketingNavbar: React.FC = () => {
             backgroundColor: 'var(--bg-glass)',
             borderBottom: '1px solid var(--border-glass)',
             padding: '1rem 0',
-            transition: 'var(--theme-transition)'
+            transition: 'var(--theme-transition)',
+            width: '100%',
+            boxSizing: 'border-box'
         }}>
-            <div className="container mx-auto px-4" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div className="container mx-auto" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
 
                 {/* Logo */}
                 <Link to="/" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', flexShrink: 0 }}>
@@ -65,10 +67,24 @@ const MarketingNavbar: React.FC = () => {
                     >
                         Free Content
                     </button>
+                    <button
+                        onClick={() => navigate('/blog')}
+                        className="bg-transparent border-none cursor-pointer text-text-secondary hover:text-brand-primary transition-colors font-medium text-sm"
+                    >
+                        Blog
+                    </button>
                 </div>
 
                 {/* DESIGN LOCK: Consistent 4px gap between navigation elements */}
-                <div className="flex items-center" style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                <div
+                    className="flex items-center"
+                    style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: typeof window !== 'undefined' && window.innerWidth < 400 ? '2px' : '4px',
+                        flexShrink: 1
+                    }}
+                >
                     <ThemeToggle />
 
                     {user ? (
@@ -82,10 +98,10 @@ const MarketingNavbar: React.FC = () => {
                     ) : (
                         <>
                             <Link to="/login" style={{ display: 'flex', textDecoration: 'none' }}>
-                                <Button variant="ghost" size="sm" className="px-2 md:px-4">Log In</Button>
+                                <Button variant="ghost" size="sm" className="px-1.5 md:px-4">Log In</Button>
                             </Link>
                             <Link to="/register" style={{ display: 'flex', textDecoration: 'none' }}>
-                                <Button size="sm" className="px-3 md:px-6">Sign Up</Button>
+                                <Button size="sm" className="px-2 md:px-6">Sign Up</Button>
                             </Link>
                         </>
                     )}

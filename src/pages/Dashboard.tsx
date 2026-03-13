@@ -54,7 +54,7 @@ const Dashboard: React.FC = () => {
         <div style={{ position: 'relative', overflow: 'hidden', minHeight: '90vh' }}>
             <div className="hero-glow" style={{ opacity: 0.6 }} />
 
-            <div className="container" style={{ padding: '4rem 0' }}>
+            <div className="container mx-auto px-4 max-w-[1400px]" style={{ padding: '4rem 0' }}>
                 <header style={{ marginBottom: '3rem' }}>
                     <h1 className="gradient-text animate-fade-in" style={{ fontSize: '3.5rem', marginBottom: '0.5rem', letterSpacing: '-0.03em' }}>
                         Your Learning
@@ -81,7 +81,7 @@ const Dashboard: React.FC = () => {
                             </Link>
                         </GlassCard>
                     ) : (
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: '2rem' }}>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-6">
                             {courses.map((enrollment: any) => {
                                 const isExpired = enrollment.isExpired || enrollment.status === 'expired';
                                 const expiresAt = enrollment.expiresAt ? new Date(enrollment.expiresAt) : null;
@@ -97,9 +97,9 @@ const Dashboard: React.FC = () => {
                                     >
                                         <GlassCard
                                             className="course-card h-full flex flex-col hover:scale-[1.02] transition-all duration-300 hover:border-primary/40 shadow-[0_4px_20px_rgba(0,0,0,0.3)] hover:shadow-[0_8px_30px_rgba(var(--primary-rgb),0.2)]"
-                                            style={{ padding: '0' }}
+                                            style={{ padding: '0.75rem' }}
                                         >
-                                            <div className="w-full h-44 bg-[#111] overflow-hidden relative">
+                                            <div className="w-full h-[140px] bg-[#111] overflow-hidden relative rounded-lg mb-4">
                                                 {enrollment.course.thumbnail ? (
                                                     <img src={enrollment.course.thumbnail} alt={enrollment.course.title} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
                                                 ) : (
@@ -112,13 +112,13 @@ const Dashboard: React.FC = () => {
                                                     </div>
                                                 )}
                                             </div>
-                                            <div className="p-6 flex flex-col flex-1">
+                                            <div className="flex flex-col flex-1">
                                                 <div className="flex items-center gap-2 mb-3">
                                                     <span className="text-[10px] font-black uppercase tracking-widest text-primary px-2 py-0.5 rounded bg-primary/10 border border-primary/20">
                                                         {enrollment.course.level || 'Professional'}
                                                     </span>
                                                 </div>
-                                                <h3 className="text-lg font-bold mb-4 line-clamp-2 leading-tight group-hover:text-primary transition-colors">
+                                                <h3 className="text-base font-bold mb-3 line-clamp-2 leading-tight group-hover:text-primary transition-colors">
                                                     {enrollment.course.title}
                                                 </h3>
 

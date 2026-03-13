@@ -27,13 +27,21 @@ interface PYQ {
 
 interface PYQListProps {
     pyqs: PYQ[];
+    onSelectPyq?: (pyq: PYQ) => void;
 }
 
-const PYQList: React.FC<PYQListProps> = ({ pyqs }) => {
+const PYQList: React.FC<PYQListProps> = ({ pyqs, onSelectPyq }) => {
     const [expandedPyq, setExpandedPyq] = useState<string | null>(null);
     const [showSolution, setShowSolution] = useState<Record<string, boolean>>({});
 
-    const handleToggleExpand = async (id: string) => {
+    const handleToggleExpand = async (pyq: PYQ) => {
+        const id = pyq.id;
+        
+        if (onSelectPyq) {
+            onSelectPyq(pyq);
+            return;
+        }
+
         if (expandedPyq === id) {
             setExpandedPyq(null);
         } else {
@@ -53,9 +61,9 @@ const PYQList: React.FC<PYQListProps> = ({ pyqs }) => {
 
     return (
         <div className="flex flex-col gap-6 w-full">
-            <div className="flex items-center justify-between mb-2">
-                <h2 className="text-2xl font-bold gradient-text">Practice Player (PYQs)</h2>
-                <span className="text-text-muted text-sm">{pyqs.length} Questions Available</span>
+            <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
+                <h2 className="text-xl md:text-2xl font-bold gradient-text">Practice Player (PYQs)</h2>
+                <span className="text-text-muted text-xs font-medium">{pyqs.length} Questions</span>
             </div>
 
             <div className="flex flex-col gap-4">
@@ -75,7 +83,7 @@ const PYQList: React.FC<PYQListProps> = ({ pyqs }) => {
                             {/* Header / Summary */}
                             <div
                                 className="p-4 flex items-center justify-between cursor-pointer"
-                                onClick={() => handleToggleExpand(pyq.id)}
+                                onClick={() => handleToggleExpand(pyq)}
                             >
                                 <div className="flex items-center gap-4">
                                     <div className="w-10 h-10 rounded-full bg-bg-surface-3 flex items-center justify-center text-primary font-bold shrink-0">
