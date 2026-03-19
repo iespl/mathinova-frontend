@@ -21,9 +21,10 @@ const Footer: React.FC = () => {
                 <div>
                     <h4 className="font-bold text-text-primary mb-4">Legal</h4>
                     <ul className="footer-list space-y-2">
-                        <li><a href="#" className="footer-link hover:text-brand-primary">Terms of Service</a></li>
-                        <li><a href="#" className="footer-link hover:text-brand-primary">Privacy Policy</a></li>
-                        <li><a href="#" className="footer-link hover:text-brand-primary">Contact Us</a></li>
+                        <li><Link to="/about" className="footer-link hover:text-brand-primary">About Us</Link></li>
+                        <li><a href="https://mathinova-frontend-420478767625.us-central1.run.app/faq" className="footer-link hover:text-brand-primary">Faq</a></li>
+                        <li><a href="https://mathinova-frontend-420478767625.us-central1.run.app/privacy" className="footer-link hover:text-brand-primary">Privacy Policy</a></li>
+                        <li><a href="https://mathinova-frontend-420478767625.us-central1.run.app/terms" className="footer-link hover:text-brand-primary">Terms of Service</a></li>
                     </ul>
                 </div>
             </div>

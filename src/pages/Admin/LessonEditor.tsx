@@ -31,16 +31,17 @@ import TrashIcon from '../../assets/trash.svg';
 interface LessonEditorProps {
     lesson: any;
     onClose: () => void;
-    onUpdate: () => void;
+    onUpdate: (data?: { id: string, videos: any[], pyqs: any[] }) => void;
     initialTab?: 'videos' | 'pyqs' | 'quiz';
 }
 
 const LessonEditor: React.FC<LessonEditorProps> = ({ lesson, onClose, onUpdate, initialTab = 'videos' }) => {
-    const [videos, setVideos] = useState<any[]>(lesson.videos || []);
-    const [pyqs, setPyqs] = useState<any[]>(lesson.pyqs || []);
-    const [quiz, setQuiz] = useState<any>(lesson.quiz || null);
+    const [videos, setVideos] = useState<any[]>([]);
+    const [pyqs, setPyqs] = useState<any[]>([]);
+    const [quiz, setQuiz] = useState<any>(null);
     const [editableTitle, setEditableTitle] = useState(lesson.title);
     const [isSaving, setIsSaving] = useState(false);
+    const [isLoadingDetails, setIsLoadingDetails] = useState(true);
     const [activeTab, setActiveTab] = useState<'videos' | 'pyqs' | 'quiz'>(initialTab);
     const [expandedPyq, setExpandedPyq] = useState<number | null>(null);
     const [confirmConfig, setConfirmConfig] = useState<{
@@ -54,6 +55,23 @@ const LessonEditor: React.FC<LessonEditorProps> = ({ lesson, onClose, onUpdate, 
         message: '',
         onConfirm: () => { }
     });
+
+    React.useEffect(() => {
+        const fetchDetails = async () => {
+            try {
+                const { data } = await adminApi.getLessonDetails(lesson.id);
+                setVideos(data.videos || []);
+                setPyqs(data.pyqs || []);
+                setQuiz(data.quiz || null);
+            } catch (error) {
+                console.error('Failed to fetch lesson details', error);
+                alert('Failed to load lesson content');
+            } finally {
+                setIsLoadingDetails(false);
+            }
+        };
+        fetchDetails();
+    }, [lesson.id]);
 
     const sensors = useSensors(
         useSensor(PointerSensor, {
@@ -277,11 +295,12 @@ const LessonEditor: React.FC<LessonEditorProps> = ({ lesson, onClose, onUpdate, 
                 await adminApi.updateLesson(lesson.id, { title: editableTitle.trim() });
             }
             await adminApi.updateLessonContent(lesson.id, { videos, pyqs, quiz });
-            onUpdate();
+            onUpdate({ id: lesson.id, videos, pyqs });
             onClose();
-        } catch (error) {
+        } catch (error: any) {
             console.error('Error saving lesson:', error);
-            alert('Failed to save lesson');
+            const message = error.response?.data?.message || error.message || 'Unknown error';
+            alert(`Failed to save lesson: ${message}`);
         } finally {
             setIsSaving(false);
         }
@@ -349,8 +368,15 @@ const LessonEditor: React.FC<LessonEditorProps> = ({ lesson, onClose, onUpdate, 
                     <Button variant="glass" size="sm" onClick={onClose}>✕</Button>
                 </div>
 
-                <div className="mt-4">
-                    {/* Videos Section */}
+                <div className="mt-4 flex-1 overflow-y-auto min-h-0">
+                    {isLoadingDetails ? (
+                        <div className="flex flex-col items-center justify-center h-64 space-y-4">
+                            <div className="w-12 h-12 border-4 border-blue-500/30 border-t-blue-500 rounded-full animate-spin"></div>
+                            <p className="text-gray-500 animate-pulse">Loading lesson content...</p>
+                        </div>
+                    ) : (
+                        <>
+                            {/* Videos Section */}
                     {activeTab === 'videos' && (
                         <section className="space-y-6">
                             <div className="mb-4">
@@ -520,7 +546,9 @@ const LessonEditor: React.FC<LessonEditorProps> = ({ lesson, onClose, onUpdate, 
                             )}
                         </section>
                     )}
-                </div>
+                </>
+            )}
+        </div>
 
                 <div className="mt-10 pt-6 border-t border-white/10 flex justify-end gap-4">
                     <Button variant="glass" onClick={onClose}>Cancel</Button>

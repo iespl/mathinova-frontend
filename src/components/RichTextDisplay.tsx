@@ -7,13 +7,15 @@ interface RichTextDisplayProps {
     className?: string;
     style?: React.CSSProperties;
     fullWidthImages?: boolean;
+    horizontalPadding?: number;
 }
 
 const RichTextDisplay: React.FC<RichTextDisplayProps> = ({ 
     htmlContent, 
     className = '', 
     style,
-    fullWidthImages = false 
+    fullWidthImages = false,
+    horizontalPadding
 }) => {
     // Generate a unique ID for this instance to scope the styles
     const instanceId = useMemo(() => `rt-${Math.random().toString(36).substr(2, 9)}`, []);
@@ -81,7 +83,7 @@ const RichTextDisplay: React.FC<RichTextDisplayProps> = ({
                 ...style, 
                 boxSizing: 'border-box',
                 maxWidth: '100%',
-                overflowX: 'auto', // Allow internal scrolling for wide math without pushing parent
+                overflowX: 'visible', // Allow images to spill out into parent padding
                 wordBreak: 'break-word'
             }}
         >
@@ -90,25 +92,36 @@ const RichTextDisplay: React.FC<RichTextDisplayProps> = ({
                     box-sizing: border-box !important;
                 }
                 #${instanceId} p,
-                #${instanceId} div {
+                #${instanceId} div,
+                #${instanceId} h1,
+                #${instanceId} h2,
+                #${instanceId} h3,
+                #${instanceId} h4,
+                #${instanceId} h5,
+                #${instanceId} h6,
+                #${instanceId} ul,
+                #${instanceId} ol {
                     max-width: 100% !important;
                     margin: 0 0 0.5em 0 !important;
                     box-sizing: border-box !important;
+                    padding-left: ${fullWidthImages ? 'var(--rt-padding, 0)' : '0'} !important;
+                    padding-right: ${fullWidthImages ? 'var(--rt-padding, 0)' : '0'} !important;
                 }
                 #${instanceId} img {
                     display: block !important;
-                    margin: ${fullWidthImages ? '12px -20px' : '12px 0'} !important;
+                    margin: 12px ${fullWidthImages ? 'calc(-1 * var(--rt-padding, 20px))' : '0'} !important;
                     border-radius: ${fullWidthImages ? '0' : '8px'};
                     height: auto !important;
-                    width: ${fullWidthImages ? 'calc(100% + 40px)' : 'auto'} !important;
-                    max-width: ${fullWidthImages ? 'calc(100% + 40px)' : '100%'} !important;
+                    width: ${fullWidthImages ? 'calc(100% + 2 * var(--rt-padding, 20px))' : '100%'} !important;
+                    max-width: ${fullWidthImages ? 'none' : '100%'} !important;
                     object-fit: contain !important;
                 }
+                #${instanceId} {
+                    --rt-padding: ${horizontalPadding !== undefined ? horizontalPadding+'px' : '20px'};
+                }
                 @media (min-width: 768px) {
-                    #${instanceId} img {
-                        margin: ${fullWidthImages ? '20px -60px' : '12px 0'} !important;
-                        width: ${fullWidthImages ? 'calc(100% + 120px)' : 'auto'} !important;
-                        max-width: ${fullWidthImages ? 'calc(100% + 120px)' : '100%'} !important;
+                    #${instanceId} {
+                        --rt-padding: ${horizontalPadding !== undefined ? horizontalPadding+'px' : '40px'};
                     }
                 }
                 #${instanceId} .katex-display {

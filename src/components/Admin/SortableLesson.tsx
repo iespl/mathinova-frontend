@@ -2,9 +2,10 @@ import React, { useState } from 'react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronDown, ChevronRight, Plus } from 'lucide-react';
+import { ChevronDown, ChevronRight, Loader2, Copy } from 'lucide-react';
 import Button from '../Button.js';
 import DragHandle from './DragHandle.js';
+import { adminApi } from '../../api/adminClient.js';
 
 import EditIcon from '../../assets/edit.svg';
 import TrashIcon from '../../assets/trash.svg';
@@ -16,10 +17,14 @@ interface SortableLessonProps {
     lesson: any;
     onEdit: (lesson: any) => void;
     onDelete: (lessonId: string) => void;
+    onClone: (lessonId: string, title: string) => void;
+    onDataLoaded?: (lessonId: string, data: { videos: any[], pyqs: any[] }) => void;
 }
 
-const SortableLesson: React.FC<SortableLessonProps> = ({ lesson, onEdit, onDelete }) => {
+const SortableLesson: React.FC<SortableLessonProps> = ({ lesson, onEdit, onDelete, onClone, onDataLoaded }) => {
     const [isExpanded, setIsExpanded] = useState(false);
+    const [isLoading, setIsLoading] = useState(false);
+
     const {
         attributes,
         listeners,
@@ -41,21 +46,58 @@ const SortableLesson: React.FC<SortableLessonProps> = ({ lesson, onEdit, onDelet
         zIndex: isDragging ? 10 : 1
     };
 
-    const hasContent = (lesson.videos?.length > 0) || (lesson.pyqs?.length > 0);
+    // Use _count from optimized backend, fallback to array length if available
+    const videoCount = lesson._count?.videos ?? lesson.videos?.length ?? 0;
+    const pyqCount = lesson._count?.pyqs ?? lesson.pyqs?.length ?? 0;
+    const hasContent = videoCount > 0 || pyqCount > 0;
+
+    const handleToggleExpand = async (e: React.MouseEvent) => {
+        e.stopPropagation();
+        if (!hasContent) return;
+
+        const nextExpanded = !isExpanded;
+        setIsExpanded(nextExpanded);
+
+        // Fetch details if expanding and data is missing
+        const hasData = lesson.videos?.length > 0 || lesson.pyqs?.length > 0;
+        if (nextExpanded && !hasData) {
+            setIsLoading(true);
+            try {
+                const { data } = await adminApi.getLessonDetails(lesson.id);
+                if (onDataLoaded) {
+                    onDataLoaded(lesson.id, {
+                        videos: data.videos || [],
+                        pyqs: data.pyqs || []
+                    });
+                }
+            } catch (error) {
+                console.error('Failed to load lesson details', error);
+            } finally {
+                setIsLoading(false);
+            }
+        }
+    };
+
+    const displayVideos = lesson.videos || [];
+    const displayPyqs = lesson.pyqs || [];
 
     return (
-        <div ref={setNodeRef} style={style} className="p-3 bg-black/20 rounded border border-white/5 shadow-sm group">
+        <div id={`lesson-${lesson.id}`} ref={setNodeRef} style={style} className="p-3 bg-black/20 rounded border border-white/5 shadow-sm group">
             <div className="flex justify-between items-center">
                 <div className="flex items-center gap-3">
                     <DragHandle attributes={attributes} listeners={listeners} />
                     <button
                         type="button"
                         onPointerDown={(e) => e.stopPropagation()}
-                        onClick={(e) => { e.stopPropagation(); setIsExpanded(!isExpanded); }}
+                        onClick={handleToggleExpand}
                         className={`p-1 hover:bg-white/5 rounded transition-colors cursor-pointer ${!hasContent && 'opacity-20 cursor-default'}`}
                         disabled={!hasContent}
                     >
-                        {isExpanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+                        {isLoading ? (
+                            <Loader2 size={16} className="animate-spin text-blue-400" />
+                        ) : (
+                            isExpanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />
+                        )}
                     </button>
                     <div>
                         <div className="font-medium flex items-center gap-2">
@@ -63,7 +105,7 @@ const SortableLesson: React.FC<SortableLessonProps> = ({ lesson, onEdit, onDelet
                             {lesson.title}
                         </div>
                         <div className="text-[10px] text-gray-500 uppercase tracking-widest mt-0.5">
-                            {lesson.videos?.length || 0} videos • {lesson.pyqs?.length || 0} PYQs
+                            {videoCount} videos • {pyqCount} PYQs
                         </div>
                     </div>
                 </div>
@@ -71,6 +113,15 @@ const SortableLesson: React.FC<SortableLessonProps> = ({ lesson, onEdit, onDelet
                     <Button size="sm" variant="glass" onPointerDown={(e) => e.stopPropagation()} onClick={(e: React.MouseEvent) => { e.stopPropagation(); onEdit(lesson); }} className="cursor-pointer">
                         <img src={EditIcon} alt="Edit" style={{ width: '14px', height: '14px', marginRight: '6px', opacity: 0.7 }} /> Content
                     </Button>
+                    <button
+                        type="button"
+                        onPointerDown={(e) => e.stopPropagation()}
+                        onClick={(e) => { e.stopPropagation(); onClone(lesson.id, lesson.title); }}
+                        className="p-2 hover:bg-white/10 rounded transition-colors cursor-pointer text-white/50 hover:text-white"
+                        title="Clone Lesson"
+                    >
+                        <Copy size={16} />
+                    </button>
                     <button
                         type="button"
                         onPointerDown={(e) => e.stopPropagation()}
@@ -93,15 +144,19 @@ const SortableLesson: React.FC<SortableLessonProps> = ({ lesson, onEdit, onDelet
                         className="overflow-hidden"
                     >
                         <div className="mt-3 pl-8 border-l-2 border-white/10 space-y-3 pt-1">
-                            {lesson.videos?.length > 0 && (
+                            {isLoading && (
+                                <div className="text-[10px] text-gray-600 animate-pulse">Loading content...</div>
+                            )}
+
+                            {displayVideos.length > 0 && (
                                 <div className="space-y-1">
                                     <div className="text-[9px] uppercase tracking-tighter text-gray-600 font-bold mb-1">Video Lectures</div>
                                     <SortableContext
-                                        items={lesson.videos.map((v: any) => v.id)}
+                                        items={displayVideos.map((v: any) => v.id)}
                                         strategy={verticalListSortingStrategy}
                                     >
                                         <div className="space-y-1">
-                                            {lesson.videos.sort((a: any, b: any) => (a.order || 0) - (b.order || 0)).map((v: any) => (
+                                            {displayVideos.sort((a: any, b: any) => (a.order || 0) - (b.order || 0)).map((v: any) => (
                                                 <MinimalSortableItem
                                                     key={v.id}
                                                     id={v.id}
@@ -115,15 +170,15 @@ const SortableLesson: React.FC<SortableLessonProps> = ({ lesson, onEdit, onDelet
                                 </div>
                             )}
 
-                            {lesson.pyqs?.length > 0 && (
+                            {displayPyqs.length > 0 && (
                                 <div className="space-y-1">
                                     <div className="text-[9px] uppercase tracking-tighter text-gray-600 font-bold mb-1">Previous Year Questions</div>
                                     <SortableContext
-                                        items={lesson.pyqs.map((p: any) => p.id)}
+                                        items={displayPyqs.map((p: any) => p.id)}
                                         strategy={verticalListSortingStrategy}
                                     >
                                         <div className="space-y-1">
-                                            {lesson.pyqs.sort((a: any, b: any) => (a.order || 0) - (b.order || 0)).map((p: any) => (
+                                            {displayPyqs.sort((a: any, b: any) => (a.order || 0) - (b.order || 0)).map((p: any) => (
                                                 <MinimalSortableItem
                                                     key={p.id}
                                                     id={p.id}

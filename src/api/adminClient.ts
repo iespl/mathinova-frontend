@@ -12,6 +12,7 @@ export const adminApi = {
     // Courses
     getCourses: () => api.get('/admin/courses'),
     getCourse: (id: string) => api.get(`/admin/courses/${id}`),
+    getCourseBasic: (id: string) => api.get(`/admin/courses/${id}/basic`),
     createCourse: (data: any) => api.post('/admin/courses', data),
     updateCourse: (id: string, data: any) => api.put(`/admin/courses/${id}`, data),
     deleteCourse: (id: string) => api.delete(`/admin/courses/${id}`),
@@ -21,6 +22,7 @@ export const adminApi = {
     updateModule: (moduleId: string, data: { title?: string, order?: number }) => api.patch(`/admin/modules/${moduleId}`, data),
     deleteModule: (moduleId: string) => api.delete(`/admin/modules/${moduleId}`),
     addLesson: (moduleId: string, data: { title: string, order: number }) => api.post(`/admin/modules/${moduleId}/lessons`, data),
+    getLessonDetails: (lessonId: string) => api.get(`/admin/lessons/${lessonId}/details`),
     deleteLesson: (lessonId: string) => api.delete(`/admin/lessons/${lessonId}`),
     updateLesson: (lessonId: string, data: { title?: string, order?: number, moduleId?: string }) => api.patch(`/admin/lessons/${lessonId}`, data),
     updateLessonContent: (lessonId: string, data: { videos?: any[], pyqs?: any[], quiz?: any }) => api.put(`/admin/lessons/${lessonId}/content`, data),

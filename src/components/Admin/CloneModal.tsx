@@ -12,27 +12,47 @@ interface CloneModalProps {
     type: 'module' | 'lesson';
     sourceId: string;
     sourceTitle: string;
-    onSuccess: () => void;
+    currentCourseId: string;
+    onSuccess: (newId: string) => void;
 }
 
-const CloneModal: React.FC<CloneModalProps> = ({ isOpen, onClose, type, sourceId, sourceTitle, onSuccess }) => {
+const CloneModal: React.FC<CloneModalProps> = ({ isOpen, onClose, type, sourceId, sourceTitle, currentCourseId, onSuccess }) => {
     const [courses, setCourses] = useState<any[]>([]);
     const [modules, setModules] = useState<any[]>([]);
     const [selectedCourseId, setSelectedCourseId] = useState<string>('');
     const [selectedModuleId, setSelectedModuleId] = useState<string>('');
     const [isLoading, setIsLoading] = useState(false);
     const [isclining, setIsCloning] = useState(false);
+    const [sourceDetails, setSourceDetails] = useState<any>(null);
 
     useEffect(() => {
         if (isOpen) {
             fetchCourses();
+            fetchSourceDetails();
         } else {
             // Reset state
             setSelectedCourseId('');
             setSelectedModuleId('');
             setModules([]);
+            setSourceDetails(null);
         }
     }, [isOpen]);
+
+    const fetchSourceDetails = async () => {
+        try {
+            if (type === 'lesson') {
+                const { data } = await adminApi.getLessonDetails(sourceId);
+                setSourceDetails(data);
+            } else {
+                // For modules, we need to find it in the course tree
+                const { data } = await adminApi.getCourse(currentCourseId);
+                const mod = data.modules?.find((m: any) => m.id === sourceId);
+                setSourceDetails(mod);
+            }
+        } catch (error) {
+            console.error('Failed to fetch source details', error);
+        }
+    };
 
     const fetchCourses = async () => {
         setIsLoading(true);
@@ -68,18 +88,36 @@ const CloneModal: React.FC<CloneModalProps> = ({ isOpen, onClose, type, sourceId
 
         setIsCloning(true);
         try {
+            let newId = '';
             if (type === 'module') {
-                await adminApi.cloneModule(sourceId, selectedCourseId);
+                const { data } = await adminApi.cloneModule(sourceId, selectedCourseId);
+                newId = data.module.id;
             } else {
-                await adminApi.cloneLesson(sourceId, selectedModuleId);
+                const { data } = await adminApi.cloneLesson(sourceId, selectedModuleId);
+                newId = data.lesson.id;
             }
-            onSuccess();
+            onSuccess(newId);
             onClose();
         } catch (error: any) {
             alert(`Cloning failed: ${error.message}`);
         } finally {
             setIsCloning(false);
         }
+    };
+
+    const isSameTarget = type === 'module' 
+        ? selectedCourseId === currentCourseId 
+        : selectedModuleId === sourceDetails?.moduleId;
+
+    const renderCounts = () => {
+        if (!sourceDetails) return null;
+        if (type === 'module') {
+            return `${sourceDetails.lessons?.length || 0} Lessons`;
+        }
+        const videoCount = sourceDetails.videos?.length || 0;
+        const pyqCount = sourceDetails.pyqs?.length || 0;
+        const hasQuiz = !!sourceDetails.quiz;
+        return `${videoCount} Videos, ${pyqCount} PYQs${hasQuiz ? ', 1 Quiz' : ''}`;
     };
 
     if (!isOpen) return null;
@@ -155,13 +193,23 @@ const CloneModal: React.FC<CloneModalProps> = ({ isOpen, onClose, type, sourceId
                                         <Loader2 className="animate-spin text-purple-400" size={24} />
                                     </div>
                                 )}
+
+                                {isSameTarget && selectedCourseId && (
+                                    <div className="p-3 bg-amber-500/10 border border-amber-500/20 rounded-xl">
+                                        <p className="text-[10px] text-amber-500 flex items-center gap-2">
+                                            <span className="font-bold shrink-0">WARNING:</span>
+                                            Cloning within same {type}. "(Copy)" will be appended to the title.
+                                        </p>
+                                    </div>
+                                )}
                             </div>
 
                             <div className="p-4 bg-purple-500/10 border border-purple-500/20 rounded-xl">
-                                <p className="text-xs text-purple-300 leading-relaxed">
-                                    <span className="font-bold flex items-center gap-1 mb-1 italic uppercase">Deep Clone Verified:</span>
-                                    This will create a completely independent copy of all nested videos, quizzes, and resources. Student progress will start fresh on the cloned item.
-                                </p>
+                                <div className="text-xs text-purple-300 leading-relaxed">
+                                    <div className="font-bold flex items-center gap-1 mb-1 italic uppercase">Confirmation Detail:</div>
+                                    <p>This will duplicate <span className="text-white font-bold underline px-1">{renderCounts() || 'associated content'}</span>.</p>
+                                    <p className="mt-2 text-[10px] opacity-70">New IDs will be generated for all cloned items. Media objects will be referenced by URL.</p>
+                                </div>
                             </div>
                         </div>
 

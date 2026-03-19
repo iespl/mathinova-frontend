@@ -23,6 +23,7 @@ import {
 import SortableModule from '../../components/Admin/SortableModule.js';
 import SortableLesson from '../../components/Admin/SortableLesson.js';
 import ConfirmModal from '../../components/Admin/ConfirmModal.js';
+import CloneModal from '../../components/Admin/CloneModal.js';
 import { restrictToVerticalAxis } from '@dnd-kit/modifiers';
 
 import TrashIcon from '../../assets/trash.svg';
@@ -50,6 +51,18 @@ const CourseEditPage: React.FC = () => {
         onConfirm: () => { }
     });
 
+    const [cloneConfig, setCloneConfig] = useState<{
+        isOpen: boolean;
+        type: 'module' | 'lesson';
+        sourceId: string;
+        sourceTitle: string;
+    }>({
+        isOpen: false,
+        type: 'module',
+        sourceId: '',
+        sourceTitle: ''
+    });
+
     const [formData, setFormData] = useState({
         title: '',
         description: '',
@@ -71,11 +84,14 @@ const CourseEditPage: React.FC = () => {
             if (!id) return;
             try {
                 const [{ data: courseData }, { data: branchData }] = await Promise.all([
-                    adminApi.getCourse(id),
+                    adminApi.getCourseBasic(id),
                     adminApi.getBranches()
                 ]);
 
-                setCourse(courseData);
+                // Initial fetch for tree structure (optimized)
+                const { data: treeData } = await adminApi.getCourse(id);
+                setCourse(treeData);
+
                 setBranches(branchData);
 
                 setFormData({
@@ -121,10 +137,44 @@ const CourseEditPage: React.FC = () => {
         setFormData(prev => ({ ...prev, [name]: value }));
     };
 
-    const refreshCourse = async () => {
+    const refreshCourse = async (updatedLessonData?: { id: string, videos: any[], pyqs: any[] }) => {
         if (!id) return;
-        const { data } = await adminApi.getCourse(id);
-        setCourse(data);
+        const { data: newData } = await adminApi.getCourse(id);
+        
+        setCourse((prev: any) => {
+            if (!prev || !prev.modules) return newData;
+            
+            // Merge to preserve lazy-loaded data
+            const mergedModules = newData.modules.map((nm: any) => {
+                const pm = prev.modules.find((m: any) => m.id === nm.id);
+                if (!pm) return nm;
+                
+                return {
+                    ...nm,
+                    lessons: nm.lessons.map((nl: any) => {
+                        // If this is the lesson we just updated, use the fresh details passed in
+                        if (updatedLessonData && nl.id === updatedLessonData.id) {
+                            return { ...nl, videos: updatedLessonData.videos, pyqs: updatedLessonData.pyqs };
+                        }
+
+                        const pl = pm.lessons.find((l: any) => l.id === nl.id);
+                        if (!pl) return nl;
+                        
+                        // Preserve existing full data if present for other lessons
+                        const hasVideos = pl.videos && pl.videos.length > 0;
+                        const hasPyqs = pl.pyqs && pl.pyqs.length > 0;
+                        
+                        if (hasVideos || hasPyqs) {
+                            return { ...nl, videos: pl.videos, pyqs: pl.pyqs };
+                        }
+                        return nl;
+                    })
+                };
+            });
+            
+            return { ...newData, modules: mergedModules };
+        });
+        
         setAddingLessonToModule(null);
         setNewLessonTitle('');
     };
@@ -147,6 +197,21 @@ const CourseEditPage: React.FC = () => {
     const handleCancelAddLesson = () => {
         setAddingLessonToModule(null);
         setNewLessonTitle('');
+    };
+
+    const handleCloneSuccess = (newId: string) => {
+        refreshCourse();
+        // Delay scroll to allow DOM to render
+        setTimeout(() => {
+            const element = document.getElementById(`lesson-${newId}`) || document.getElementById(`module-${newId}`);
+            if (element) {
+                element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                element.classList.add('ring-2', 'ring-purple-500', 'ring-offset-2', 'ring-offset-black');
+                setTimeout(() => {
+                    element.classList.remove('ring-2', 'ring-purple-500', 'ring-offset-2', 'ring-offset-black');
+                }, 3000);
+            }
+        }, 800);
     };
 
     const handleSaveLesson = async (moduleId: string, currentLessonCount: number) => {
@@ -230,6 +295,19 @@ const CourseEditPage: React.FC = () => {
             }
         }
         return null;
+    };
+
+    const handleLessonDataLoaded = (lessonId: string, data: any) => {
+        setCourse((prev: any) => {
+            if (!prev || !prev.modules) return prev;
+            const newModules = prev.modules.map((m: any) => ({
+                ...m,
+                lessons: m.lessons.map((l: any) =>
+                    l.id === lessonId ? { ...l, ...data } : l
+                )
+            }));
+            return { ...prev, modules: newModules };
+        });
     };
 
     const handleDragEnd = async (event: DragEndEvent) => {
@@ -597,6 +675,7 @@ const CourseEditPage: React.FC = () => {
                                         onAddLesson={setAddingLessonToModule}
                                         onRename={handleRenameModule}
                                         onDelete={handleDeleteModule}
+                                        onClone={(id, title) => setCloneConfig({ isOpen: true, type: 'module', sourceId: id, sourceTitle: title })}
                                     >
                                         {addingLessonToModule === m.id && (
                                             <div className="mb-4 p-3 bg-white/5 rounded border border-white/10 flex gap-3 items-end">
@@ -626,6 +705,8 @@ const CourseEditPage: React.FC = () => {
                                                         lesson={l}
                                                         onEdit={setSelectedLesson}
                                                         onDelete={handleDeleteLesson}
+                                                        onClone={(id, title) => setCloneConfig({ isOpen: true, type: 'lesson', sourceId: id, sourceTitle: title })}
+                                                        onDataLoaded={handleLessonDataLoaded}
                                                     />
                                                 ))}
                                             </div>
@@ -658,6 +739,17 @@ const CourseEditPage: React.FC = () => {
                 message={confirmConfig.message}
                 onConfirm={confirmConfig.onConfirm}
                 onClose={() => setConfirmConfig(prev => ({ ...prev, isOpen: false }))}
+            />
+
+            {/* Clone Modal */}
+            <CloneModal
+                isOpen={cloneConfig.isOpen}
+                type={cloneConfig.type}
+                sourceId={cloneConfig.sourceId}
+                sourceTitle={cloneConfig.sourceTitle}
+                currentCourseId={id!}
+                onClose={() => setCloneConfig(prev => ({ ...prev, isOpen: false }))}
+                onSuccess={handleCloneSuccess}
             />
         </div>
     );

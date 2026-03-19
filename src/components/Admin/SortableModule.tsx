@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronDown, ChevronRight, Plus } from 'lucide-react';
+import { ChevronDown, ChevronRight, Plus, Copy } from 'lucide-react';
 import Button from '../Button.js';
 import DragHandle from './DragHandle.js';
 
@@ -15,9 +15,10 @@ interface SortableModuleProps {
     onAddLesson: (moduleId: string) => void;
     onRename: (moduleId: string, newTitle: string) => void;
     onDelete: (moduleId: string) => void;
+    onClone: (moduleId: string, title: string) => void;
 }
 
-const SortableModule: React.FC<SortableModuleProps> = ({ module, children, onAddLesson, onRename, onDelete }) => {
+const SortableModule: React.FC<SortableModuleProps> = ({ module, children, onAddLesson, onRename, onDelete, onClone }) => {
     const [isExpanded, setIsExpanded] = useState(true);
     const [isEditing, setIsEditing] = useState(false);
     const [editedTitle, setEditedTitle] = useState(module.title);
@@ -57,7 +58,7 @@ const SortableModule: React.FC<SortableModuleProps> = ({ module, children, onAdd
     };
 
     return (
-        <div ref={setNodeRef} style={style} className="p-4 bg-black/20 rounded border border-white/5 shadow-lg">
+        <div id={`module-${module.id}`} ref={setNodeRef} style={style} className="p-4 bg-black/20 rounded border border-white/5 shadow-lg">
             <div className="flex justify-between items-center mb-4">
                 <div className="flex items-center gap-3 flex-1">
                     <DragHandle attributes={attributes} listeners={listeners} />
@@ -111,6 +112,15 @@ const SortableModule: React.FC<SortableModuleProps> = ({ module, children, onAdd
                     >
                         <Plus size={14} className="mr-1" /> Add Lesson
                     </Button>
+                    <button
+                        type="button"
+                        onPointerDown={(e) => e.stopPropagation()}
+                        onClick={(e) => { e.stopPropagation(); onClone(module.id, module.title); }}
+                        className="p-2 hover:bg-white/10 rounded transition-colors cursor-pointer text-white/50 hover:text-white"
+                        title="Clone Module"
+                    >
+                        <Copy size={16} />
+                    </button>
                     <button
                         type="button"
                         onPointerDown={(e) => e.stopPropagation()}

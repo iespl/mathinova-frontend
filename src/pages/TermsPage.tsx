@@ -15,43 +15,69 @@ const TermsPage: React.FC = () => {
                 <div className="max-w-4xl mx-auto">
                     <div className="mb-10 text-center">
                         <h1 className="text-4xl md:text-5xl font-black tracking-tight text-text-primary mb-4">Terms & <span className="gradient-text">Conditions</span></h1>
-                        <p className="text-text-muted font-medium">Please read these terms carefully before using our service.</p>
+                        <p className="text-text-muted font-medium">Please read these terms and conditions carefully before using Our Service.</p>
                     </div>
 
-                    <GlassCard className="p-10 border-white/5 leading-relaxed">
-                        <div className="prose-legal space-y-8 text-text-secondary">
-                            <section className="space-y-4">
-                                <h2 className="text-2xl font-bold text-text-primary underline decoration-primary/30 underline-offset-8">General Terms</h2>
-                                <p>The Terms and Conditions contained herein shall apply to any person (“User”) using the services of Mathinova for making payment through an online payment gateway service. Each User is therefore deemed to have read and accepted these Terms and Conditions.</p>
-                                <p>Mathinova's rights and obligations shall be subject to the laws in force in India. Any disputes are subject to the exclusive jurisdiction of the courts in Bengaluru.</p>
+                    <GlassCard className="p-8 md:p-12 border-white/5 leading-relaxed">
+                        <div className="prose-legal space-y-10 text-text-secondary">
+                            <p>
+                                The Terms and Conditions contained herein shall apply to any person (“User”) using the services of Mathinova 
+                                for making payment through an online payment gateway service (“Service”) offered by Payment Gateway Service provider, 
+                                through Mathinova website https://mathinova.com.
+                            </p>
+
+                            <section className="space-y-6">
+                                <h2 className="text-2xl font-bold text-text-primary border-b border-white/10 pb-2">General Terms</h2>
+                                <div className="space-y-4">
+                                    <ul className="list-decimal pl-6 space-y-4">
+                                        <li>Once a User has accepted these Terms and Conditions, he/ she may register and avail the Services.</li>
+                                        <li>Mathinova’ rights, obligations, undertakings shall be subject to the laws in force in India. Each User accepts and agrees that the provision of details of his/ her use of the Website to regulators or police or to any other third party in order to resolve disputes or complaints which relate to the Website shall be at the absolute discretion of Mathinova.</li>
+                                        <li>If any part of these Terms and Conditions are determined to be invalid or unenforceable pursuant to applicable law then the invalid provision will be deemed superseded by a valid provision that most closely matches the intent of the original provision.</li>
+                                        <li>The entries in the books of Mathinova and/or the Payment Service Providers regard to transactions covered under these Terms and Conditions shall be binding on the User.</li>
+                                    </ul>
+                                </div>
                             </section>
 
-                            <section className="space-y-4">
-                                <h2 className="text-2xl font-bold text-text-primary">Online Payments</h2>
-                                <p>Once a User has accepted these Terms and Conditions, he/she may register and avail the Services. Mathinova utilizes Razorpay for secure payment processing.</p>
-                                <ul className="list-decimal pl-6 space-y-2">
-                                    <li>Users are responsible for ensuring that the debit/credit card details provided are correct and accurate.</li>
-                                    <li>The User warrants that they are fully and lawfully entitled to use the nominated bank account/card.</li>
-                                    <li>Mathinova assumes no liability for technical failures or session timeouts during the payment process.</li>
-                                </ul>
+                            <section className="space-y-6">
+                                <h2 className="text-2xl font-bold text-text-primary border-b border-white/10 pb-2">Refund & Chargeback</h2>
+                                <div className="space-y-4">
+                                    <h3 className="text-xl font-bold text-text-primary/90">Refund for Charge Back Transaction</h3>
+                                    <p>
+                                        In the event there is any claim for charge back by the User, such User shall immediately approach 
+                                        Mathinova alone. No claims for refund shall be made to the Payment Service Provider(s).
+                                    </p>
+                                    <h3 className="text-xl font-bold text-text-primary/90 mt-6">Refund for fraudulent/duplicate transaction(s)</h3>
+                                    <p>
+                                        The User shall directly contact Mathinova for any fraudulent transaction(s) on account of misuse 
+                                        of Card/ Bank details. Issue shall be addressed by Mathinova alone in line with their policies.
+                                    </p>
+                                </div>
                             </section>
 
-                            <section className="space-y-4">
-                                <h2 className="text-2xl font-bold text-text-primary">Refund Policy</h2>
-                                <p>In the event of a duplicate or fraudulent transaction, the User shall immediately approach Mathinova for any claim details. No claims for refund shall be made to the Payment Service Provider directly.</p>
-                                <p>Approved refunds are processed only via the original payment gateway or as deemed appropriate by Mathinova management.</p>
+                            <section className="space-y-6">
+                                <h2 className="text-2xl font-bold text-text-primary border-b border-white/10 pb-2">Limitation of Liability</h2>
+                                <p>
+                                    Mathinova has made this Service available as a matter of convenience. Mathinova and/or the Payment Service 
+                                    Providers shall not be liable for any inaccuracy, error or delay in, or omission of any data, information or message.
+                                </p>
                             </section>
 
-                            <section className="space-y-4">
-                                <h2 className="text-2xl font-bold text-text-primary">Limitation of Liability</h2>
-                                <p>Mathinova disclaims any claim or liability arising out of the provision of this Service. The User agrees that Mathinova or any of its employees will not be held liable for any loss or damages arising from the use of, or reliance upon the information contained on the Website.</p>
+                            <section className="space-y-6">
+                                <h2 className="text-2xl font-bold text-text-primary border-b border-white/10 pb-2">Ownership & Intellectual Property</h2>
+                                <p>
+                                    All Training Material is owned by Mathinova. When you are given access to the Training Material, 
+                                    you are granted a non-exclusive, non-transferable, revocable license to use the Training Material. 
+                                    No Training Material may be copied, reproduced, or displayed in any way without Mathinova’ prior permission.
+                                </p>
                             </section>
 
-                            <section className="space-y-4 border-t border-white/10 pt-8">
-                                <h2 className="text-xl font-bold text-text-primary">Contact Information</h2>
-                                <p>Support Email: support@innoventengg.com</p>
-                                <p>Phone: +91 9448485002</p>
-                                <p>Address: Flat No. 003 / 004, Paramount Regency, No. 5 Hennur Main Road, Bengaluru - 560084.</p>
+                            <section className="space-y-6">
+                                <h2 className="text-2xl font-bold text-text-primary border-b border-white/10 pb-2">Contact Details</h2>
+                                <div className="bg-white/5 p-6 rounded-2xl border border-white/5 space-y-2">
+                                    <p><strong>Email:</strong> support@innoventengg.com</p>
+                                    <p><strong>Phone:</strong> 9448485002</p>
+                                    <p><strong>Address:</strong> Flat No. 003 / 004, paramount regency, No. 5 Hennur Main Road, Bengaluru - 560084.</p>
+                                </div>
                             </section>
                         </div>
                     </GlassCard>

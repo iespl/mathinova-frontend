@@ -345,21 +345,23 @@ const CourseDetailPage: React.FC = () => {
                             )}
 
 
-                            {/* Detailed Description */}
-                            {course.longDescription ? (
-                                <div className="prose-simple max-w-none text-text-secondary" dangerouslySetInnerHTML={{
-                                    __html: course.longDescription.replace(/\n/g, '<br/>')
-                                }} />
-                            ) : (
-                                <>
-                                    {slug === 'structural-engineering-theory-practice' && (
-                                        <CourseDescription />
-                                    )}
-                                    {slug === 'advanced-structural-dynamics' && (
-                                        <Math2Description />
-                                    )}
-                                </>
-                            )}
+                            {/* Detailed Description - Hidden on Mobile for cleaner UI */}
+                            <div className="mobile-hidden">
+                                {course.longDescription ? (
+                                    <div className="prose-simple max-w-none text-text-secondary" dangerouslySetInnerHTML={{
+                                        __html: course.longDescription.replace(/\n/g, '<br/>')
+                                    }} />
+                                ) : (
+                                    <>
+                                        {slug === 'structural-engineering-theory-practice' && (
+                                            <CourseDescription />
+                                        )}
+                                        {slug === 'advanced-structural-dynamics' && (
+                                            <Math2Description />
+                                        )}
+                                    </>
+                                )}
+                            </div>
 
                             {/* Premium Showcase - Featured Previews */}
                             {!isEnrolled && hasSamples && (
@@ -390,7 +392,6 @@ const CourseDetailPage: React.FC = () => {
                                                 </div>
                                                 <div>
                                                     <h4 className="text-sm font-bold text-text-primary group-hover:text-blue-400 transition-colors line-clamp-1">{vid.title}</h4>
-                                                    <p className="text-[10px] text-text-muted mt-1 uppercase font-semibold tracking-wide">In: {vid.lessonTitle}</p>
                                                 </div>
                                             </GlassCard>
                                         ))}
@@ -415,7 +416,6 @@ const CourseDetailPage: React.FC = () => {
                                                     <h4 className="text-sm font-bold text-text-primary group-hover:text-primary-cyan transition-colors line-clamp-2">
                                                         {stripAndDecode(pyq.questionText || 'Answered PYQ')}
                                                     </h4>
-                                                    <p className="text-[10px] text-text-muted mt-1 uppercase font-semibold tracking-wide">In: {pyq.lessonTitle}</p>
                                                 </div>
                                             </GlassCard>
                                         ))}

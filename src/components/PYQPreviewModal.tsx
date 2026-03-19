@@ -32,24 +32,19 @@ const PYQPreviewModal: React.FC<PYQPreviewModalProps> = ({
         return () => window.removeEventListener('resize', checkMobile);
     }, []);
 
-    // Prevent background scroll and handle ESC key when modal is open
+    // ESC key handling (Scroll lock moved to LearningPlayer)
     useEffect(() => {
         const handleEsc = (e: KeyboardEvent) => {
-            if (e.key === 'Escape') {
-                onClose();
-            }
+            if (e.key === 'Escape') onClose();
         };
 
         if (isOpen) {
-            document.body.style.overflow = 'hidden';
             window.addEventListener('keydown', handleEsc);
         } else {
-            document.body.style.overflow = 'unset';
             window.removeEventListener('keydown', handleEsc);
         }
 
         return () => {
-            document.body.style.overflow = 'unset';
             window.removeEventListener('keydown', handleEsc);
         };
     }, [isOpen, onClose]);
@@ -57,65 +52,66 @@ const PYQPreviewModal: React.FC<PYQPreviewModalProps> = ({
     if (!isOpen || !activePyq) return null;
 
     return createPortal(
-        <div
-            style={{ 
+        <div 
+            style={{
                 position: 'fixed',
                 top: 0,
                 left: 0,
                 right: 0,
                 bottom: 0,
-                zIndex: 1000000,
-                backgroundColor: 'rgba(5, 5, 10, 0.85)',
-                backdropFilter: 'blur(10px)',
+                zIndex: 10000000,
+                backgroundColor: '#050508',
                 overflowY: 'auto',
                 overflowX: 'hidden',
-                display: 'flex',
-                justifyContent: 'center',
-                alignItems: 'flex-start',
-                padding: isMobile ? '0' : '20px 10px',
-                boxSizing: 'border-box'
+                WebkitOverflowScrolling: 'touch',
+                display: 'block'
             }}
             onClick={onClose}
         >
-            {/* Modal Box */}
-            <div
-                style={{ 
-                    position: 'relative',
-                    width: '100%',
-                    maxWidth: isMobile ? '100%' : '1100px',
-                    backgroundColor: '#FFFFFF',
-                    borderRadius: isMobile ? '0' : '24px',
-                    border: isMobile ? 'none' : '1px solid #E2E8F0',
-                    boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    marginTop: isMobile ? '0' : '40px',
-                    marginBottom: isMobile ? '0' : '40px',
-                    minHeight: isMobile ? '100vh' : 'auto',
-                    color: '#000000',
-                    boxSizing: 'border-box',
-                    overflowX: 'hidden' 
-                }}
-                onClick={e => e.stopPropagation()}
-            >
-                {/* Sticky Header */}
-                <div 
-                    style={{
-                        position: 'sticky',
-                        top: 0,
+            {/* Scroll Wrapper */}
+            <div style={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'flex-start',
+                minHeight: '100.1%',
+                width: '100%',
+                padding: isMobile ? '0' : '40px 16px',
+                boxSizing: 'border-box'
+            }}>
+                {/* Modal Box */}
+                <div
+                    style={{ 
+                        position: 'relative',
+                        width: '100%',
+                        maxWidth: isMobile ? '100%' : '1100px',
+                        backgroundColor: '#FFFFFF',
+                        borderRadius: isMobile ? '0' : '24px',
+                        border: isMobile ? 'none' : '1px solid #E2E8F0',
+                        boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
                         display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        padding: isMobile ? '16px 20px' : '20px 30px',
-                        borderBottom: '1px solid #E2E8F0',
-                        backgroundColor: 'rgba(255, 255, 255, 0.95)',
-                        backdropFilter: 'blur(16px)',
-                        zIndex: 100,
-                        borderTopLeftRadius: isMobile ? '0' : '24px',
-                        borderTopRightRadius: isMobile ? '0' : '24px',
-                        boxSizing: 'border-box'
+                        flexDirection: 'column',
+                        minHeight: isMobile ? '100vh' : 'auto',
+                        color: '#000000',
+                        boxSizing: 'border-box',
+                        overflow: 'hidden',
+                        cursor: 'default'
                     }}
+                    onClick={e => e.stopPropagation()}
                 >
+                    {/* Header - Simplified Non-Sticky */}
+                    <div 
+                        style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            padding: isMobile ? '16px 20px' : '20px 30px',
+                            borderBottom: '1px solid #E2E8F0',
+                            backgroundColor: '#FFFFFF',
+                            zIndex: 100,
+                            boxSizing: 'border-box'
+                        }}
+                    >
                     <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
                         <div style={{ 
                             display: 'flex', 
@@ -163,8 +159,8 @@ const PYQPreviewModal: React.FC<PYQPreviewModalProps> = ({
                 </div>
 
                 {/* Content */}
-                <div style={{ padding: isMobile ? '24px 20px' : '40px 60px', paddingBottom: '80px', boxSizing: 'border-box' }}>
-                    <div style={{ maxWidth: '1000px', margin: '0 auto', boxSizing: 'border-box' }}>
+                <div style={{ padding: isMobile ? '24px 0px' : '40px 0px', paddingBottom: '80px', boxSizing: 'border-box' }}>
+                    <div style={{ maxWidth: '100%', margin: '0 auto', boxSizing: 'border-box', padding: isMobile ? '0 16px' : '0 40px' }}>
                         {/* Question Section */}
                         <div style={{ marginBottom: isMobile ? '40px' : '60px', boxSizing: 'border-box' }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '24px' }}>
@@ -175,26 +171,28 @@ const PYQPreviewModal: React.FC<PYQPreviewModalProps> = ({
                             <div style={{ 
                                 backgroundColor: '#F8FAFC',
                                 borderRadius: '24px', 
-                                padding: isMobile ? '24px 20px' : '40px', 
+                                padding: isMobile ? '24px 0' : '40px 0', 
                                 border: '1px solid #E2E8F0',
                                 boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05)',
                                 boxSizing: 'border-box',
                                 overflowX: 'hidden'
                             }}>
-                                <RichTextDisplay 
-                                    htmlContent={activePyq.questionText} 
-                                    fullWidthImages={true}
-                                    style={{ fontSize: isMobile ? '16px' : '18px', color: '#000000', lineHeight: 1.7, fontWeight: 500 }}
-                                />
+                                <div style={{ padding: '0', boxSizing: 'border-box' }}>
+                                    <RichTextDisplay 
+                                        htmlContent={activePyq.questionText} 
+                                        fullWidthImages={true}
+                                        horizontalPadding={isMobile ? 20 : 40}
+                                        style={{ fontSize: isMobile ? '16px' : '18px', color: '#000000', lineHeight: 1.7, fontWeight: 500 }}
+                                    />
+                                </div>
                                 {activePyq.questionImages?.map((img: string, i: number) => (
                                     <div key={i} style={{ 
                                         marginTop: '20px', 
-                                        marginLeft: isMobile ? '-20px' : '-40px',
-                                        marginRight: isMobile ? '-20px' : '-40px',
-                                        width: `calc(100% + ${isMobile ? '40px' : '80px'})`,
+                                        width: isMobile ? 'calc(100% + 32px)' : 'calc(100% + 80px)',
+                                        marginLeft: isMobile ? '-16px' : '-40px',
                                         overflow: 'hidden', 
                                         borderTop: '1px solid #E2E8F0',
-                                        borderBottom: '1px solid #E2E8F0' 
+                                        borderBottom: '1px solid #E2E8F0'
                                     }}>
                                         <img src={img} alt="" style={{ width: '100%', height: 'auto', display: 'block', objectFit: 'contain' }} />
                                     </div>
@@ -236,25 +234,27 @@ const PYQPreviewModal: React.FC<PYQPreviewModalProps> = ({
                             <div style={{ 
                                 backgroundColor: '#F0FDF4',
                                 borderRadius: '24px', 
-                                padding: isMobile ? '24px 20px' : '40px', 
+                                padding: isMobile ? '24px 0' : '40px 0', 
                                 border: '1px solid #DCFCE7',
                                 boxSizing: 'border-box',
                                 overflowX: 'hidden'
                             }}>
-                                <RichTextDisplay 
-                                    htmlContent={activePyq.answerText || '<em style="opacity: 0.5; color: #64748B">Full detailed solution is being prepared...</em>'} 
-                                    fullWidthImages={true}
-                                    style={{ fontSize: isMobile ? '16px' : '18px', color: '#000000', lineHeight: 1.7 }}
-                                />
+                                <div style={{ padding: '0', boxSizing: 'border-box' }}>
+                                    <RichTextDisplay 
+                                        htmlContent={activePyq.answerText || '<em style="opacity: 0.5; color: #64748B">Full detailed solution is being prepared...</em>'} 
+                                        fullWidthImages={true}
+                                        horizontalPadding={isMobile ? 20 : 60}
+                                        style={{ fontSize: isMobile ? '16px' : '18px', color: '#000000', lineHeight: 1.7 }}
+                                    />
+                                </div>
                                 {activePyq.answerImages?.map((img: string, i: number) => (
                                     <div key={i} style={{ 
                                         marginTop: '20px', 
-                                        marginLeft: isMobile ? '-20px' : '-60px',
-                                        marginRight: isMobile ? '-20px' : '-60px',
-                                        width: `calc(100% + ${isMobile ? '40px' : '120px'})`,
+                                        width: isMobile ? 'calc(100% + 32px)' : 'calc(100% + 80px)',
+                                        marginLeft: isMobile ? '-16px' : '-40px',
                                         overflow: 'hidden', 
                                         borderTop: '1px solid #DCFCE7',
-                                        borderBottom: '1px solid #DCFCE7' 
+                                        borderBottom: '1px solid #DCFCE7'
                                     }}>
                                         <img src={img} alt="" style={{ width: '100%', height: 'auto', display: 'block', objectFit: 'contain' }} />
                                     </div>
@@ -327,6 +327,7 @@ const PYQPreviewModal: React.FC<PYQPreviewModalProps> = ({
                             </div>
                         )}
                     </div>
+                </div>
                 </div>
             </div>
         </div>,

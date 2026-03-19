@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import GlassCard from '../components/GlassCard';
-import { Target, Lightbulb, Users, Phone, Mail, MapPin } from 'lucide-react';
+import { Target, Lightbulb, Users, Phone, Mail, MapPin, Gauge, ShieldCheck, Zap } from 'lucide-react';
 import useTitle from '../hooks/useTitle';
 
 const AboutPage: React.FC = () => {
@@ -9,27 +9,6 @@ const AboutPage: React.FC = () => {
     useEffect(() => {
         window.scrollTo(0, 0);
     }, []);
-
-    const sections = [
-        {
-            title: "Our Vision",
-            icon: Target,
-            content: "At Mathinova, we envision a future where engineering education transcends traditional boundaries, where mathematical proficiency becomes not just a requirement, but a transformative foundation. With an unwavering dedication to engineering excellence, we strive to empower students with the tools they need to thrive in a rapidly evolving technological world.",
-            color: "text-blue-400"
-        },
-        {
-            title: "The Math Program",
-            icon: Lightbulb,
-            content: "Central to our endeavour is our comprehensive \"Engineering Math Program,\" meticulously designed to go beyond the confines of textbooks. This program is a testament to our commitment to academic rigor and the cultivation of mathematical thinking – a skill that lies at the core of modern sciences and product development.",
-            color: "text-amber-400"
-        },
-        {
-            title: "Why Mathinova?",
-            icon: Users,
-            content: "Mathinova stands as a beacon of transformation in the realm of engineering mathematics. With over 20+ years of combined experience, we bridge the gap between Industry and Academia. We foster critical thinking, problem-solving, and creative application, equipping students with the prowess needed to craft physics-based models and optimize solutions.",
-            color: "text-emerald-400"
-        }
-    ];
 
     return (
         <div className="min-h-screen bg-bg-obsidian pt-32 pb-20">
@@ -40,44 +19,108 @@ const AboutPage: React.FC = () => {
             </div>
 
             <div className="container relative z-10">
-                <div className="max-w-4xl mx-auto space-y-12">
+                <div className="max-w-4xl mx-auto space-y-16">
                     {/* Header */}
-                    <div className="text-center space-y-4">
+                    <div className="text-center space-y-6">
                         <h1 className="text-4xl md:text-6xl font-black tracking-tight text-text-primary">
-                            Innovating <span className="gradient-text">Engineering Math</span>
+                            About <span className="gradient-text">Mathinova</span>
                         </h1>
-                        <p className="text-lg text-text-secondary max-w-2xl mx-auto">
-                            Ignite the Mathematician, Engineer the Future.
+                        <p className="text-lg text-text-secondary leading-relaxed max-w-3xl mx-auto">
+                            Welcome to Mathinova, the dynamic nexus of knowledge and innovation in the world of engineering mathematics. 
+                            As the content creation and deployment wing of Innovent Engineering Solution, Mathinova is committed to reshaping 
+                            the landscape of undergraduate engineering education.
                         </p>
                     </div>
 
-                    {/* Core Sections */}
-                    <div className="grid gap-6">
-                        {sections.map((sec, idx) => (
-                            <GlassCard key={idx} className="p-8 group hover:bg-white/[0.04] transition-all duration-300 border-white/5">
-                                <div className="flex flex-col md:flex-row gap-6">
-                                    <div className={`w-14 h-14 rounded-2xl bg-white/5 flex items-center justify-center shrink-0 ${sec.color}`}>
-                                        <sec.icon size={28} />
+                    {/* Mission / Legacy */}
+                    <GlassCard className="p-8 md:p-12 border-white/5">
+                        <p className="text-xl text-text-primary/90 leading-relaxed text-center font-medium">
+                            With a legacy of over <span className="text-primary font-black">20+ years</span> in both Industry and Academic teaching, 
+                            Innovent is on a mission to revolutionize engineering learning through inventive pedagogical approaches, 
+                            fostering a stronger engineering culture from the grassroots level.
+                        </p>
+                    </GlassCard>
+
+                    {/* Vision & Program */}
+                    <div className="grid md:grid-cols-2 gap-8">
+                        <GlassCard className="p-8 space-y-4 border-white/5">
+                            <div className="w-12 h-12 rounded-xl bg-primary/20 flex items-center justify-center text-primary">
+                                <Target size={24} />
+                            </div>
+                            <h2 className="text-2xl font-bold text-text-primary">Our Vision</h2>
+                            <p className="text-text-secondary leading-relaxed">
+                                We envision a future where engineering education transcends traditional boundaries, where mathematical proficiency 
+                                becomes not just a requirement, but a transformative foundation. Our goal is to nurture individuals who possess 
+                                not only a deep understanding of mathematical concepts but also the ability to apply them creatively and critically.
+                            </p>
+                        </GlassCard>
+
+                        <GlassCard className="p-8 space-y-4 border-white/5">
+                            <div className="w-12 h-12 rounded-xl bg-amber-400/20 flex items-center justify-center text-amber-400">
+                                <Lightbulb size={24} />
+                            </div>
+                            <h2 className="text-2xl font-bold text-text-primary">The Math Program</h2>
+                            <p className="text-text-secondary leading-relaxed">
+                                Central to our endeavour is our comprehensive "Engineering Math Program," meticulously designed to go beyond 
+                                the confines of textbooks. This program is a testament to our commitment to academic rigor and the 
+                                cultivation of mathematical thinking – a skill that lies at the core of modern sciences.
+                            </p>
+                        </GlassCard>
+                    </div>
+
+                    {/* Why Mathinova - Detailed Sections */}
+                    <div className="space-y-8">
+                        <h2 className="text-3xl font-black text-text-primary text-center">Why Mathinova?</h2>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            {[
+                                {
+                                    title: "Experience and Expertise",
+                                    desc: "With a combined experience of over 20+ years, Innovent Engineering Solution boasts a wealth of knowledge that spans both Industry and Academia.",
+                                    icon: ShieldCheck,
+                                    color: "text-emerald-400"
+                                },
+                                {
+                                    title: "Holistic Approach",
+                                    desc: "We recognize that engineering education isn't just about passing exams; it's about nurturing a mindset that can navigate complex challenges.",
+                                    icon: Zap,
+                                    color: "text-blue-400"
+                                },
+                                {
+                                    title: "Real-world Relevance",
+                                    desc: "We equip students with mathematical prowess needed to craft physics-based models, interpret data, optimize solutions, and conduct design iterations.",
+                                    icon: Gauge,
+                                    color: "text-violet-400"
+                                },
+                                {
+                                    title: "Engineering Culture Upliftment",
+                                    desc: "Mathinova isn't just about teaching formulas; it's about instilling a passion for engineering and uplifting the culture at its grassroots.",
+                                    icon: Users,
+                                    color: "text-amber-400"
+                                }
+                            ].map((item, i) => (
+                                <GlassCard key={i} className="p-6 border-white/5 group hover:bg-white/[0.04] transition-all">
+                                    <div className="flex gap-5">
+                                        <div className={`shrink-0 w-10 h-10 rounded-lg bg-white/5 flex items-center justify-center ${item.color}`}>
+                                            <item.icon size={20} />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <h3 className="font-bold text-text-primary">{item.title}</h3>
+                                            <p className="text-sm text-text-secondary leading-relaxed">{item.desc}</p>
+                                        </div>
                                     </div>
-                                    <div className="space-y-3">
-                                        <h2 className="text-2xl font-bold text-text-primary">{sec.title}</h2>
-                                        <p className="text-text-secondary leading-relaxed text-lg">
-                                            {sec.content}
-                                        </p>
-                                    </div>
-                                </div>
-                            </GlassCard>
-                        ))}
+                                </GlassCard>
+                            ))}
+                        </div>
                     </div>
 
                     {/* Contact Grid */}
                     <div className="pt-8">
-                        <h2 className="text-3xl font-bold text-text-primary mb-8 text-center">Get in Touch</h2>
+                        <h2 className="text-3xl font-bold text-text-primary mb-8 text-center">Contact Us</h2>
                         <div className="grid md:grid-cols-3 gap-6">
                             <GlassCard className="p-6 text-center space-y-4 border-white/5">
                                 <Mail className="mx-auto text-primary" size={32} />
                                 <div>
-                                    <h3 className="font-bold text-text-primary">Email Us</h3>
+                                    <h3 className="font-bold text-text-primary">Email Support</h3>
                                     <p className="text-text-secondary text-sm">support@mathinova.com</p>
                                 </div>
                             </GlassCard>
@@ -91,8 +134,10 @@ const AboutPage: React.FC = () => {
                             <GlassCard className="p-6 text-center space-y-4 border-white/5">
                                 <MapPin className="mx-auto text-amber-400" size={32} />
                                 <div>
-                                    <h3 className="font-bold text-text-primary">Location</h3>
-                                    <p className="text-text-secondary text-sm">Bengaluru, Karnataka - 560084</p>
+                                    <h3 className="font-bold text-text-primary">Office</h3>
+                                    <p className="text-text-secondary text-xs leading-tight">
+                                        Flat No. 003 / 004, Paramount Regency, No. 5 Hennur Main Road, Bengaluru - 560084.
+                                    </p>
                                 </div>
                             </GlassCard>
                         </div>
@@ -100,9 +145,9 @@ const AboutPage: React.FC = () => {
 
                     {/* Footer Tagline */}
                     <div className="text-center pt-10">
-                        <div className="inline-block px-6 py-2 rounded-full bg-primary/10 border border-primary/20 text-primary font-black uppercase tracking-widest text-xs">
-                            Since 2023
-                        </div>
+                        <p className="text-text-muted font-black uppercase tracking-[0.3em] text-xs">
+                            Ignite the Mathematician, Engineer the Future!
+                        </p>
                     </div>
                 </div>
             </div>

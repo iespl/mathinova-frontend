@@ -1,0 +1,12 @@
+.gcloudignore
+.git
+.gitignore
+node_modules/
+dist/
+!Dockerfile
+!.dockerignore
+.env
+.env.local
+!nginx.conf
+cloudbuild.yaml
+!cloudbuild_deploy.yaml

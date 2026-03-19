@@ -25,6 +25,7 @@ const LearningPlayer: React.FC = () => {
     const [activePyq, setActivePyq] = useState<any>(null);
     const lastUpdateRef = useRef<number>(0);
     const playerRef = useRef<HTMLDivElement>(null);
+    const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
 
     const handleVideoPlay = () => {
         // Comprehensive scroll to top for maximum compatibility across browsers/containers
@@ -99,32 +100,28 @@ const LearningPlayer: React.FC = () => {
         if (activeLesson) {
             // Use requestAnimationFrame to ensure the module expansion (state change above)
             // has rendered in the DOM before we try to find the element
-            const scrollAction = () => {
-                const elementId = activeVideo ? `video-${activeVideo.id}` : `lesson-${activeLesson.id}`;
-                const element = document.getElementById(elementId);
-                if (element) {
-                    // Use block: 'nearest' for sidebar to avoid scrolling the main window
-                    element.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-                }
-            };
-
-            // Wait for DOM updates
             requestAnimationFrame(() => {
-                // Use a slightly longer delay to ensure player scroll (if any) starts first
-                setTimeout(scrollAction, 150);
+                const activeItem = document.querySelector(`[data-active-lesson="true"]`);
+                if (activeItem) {
+                    activeItem.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                }
             });
         }
-    }, [activeLesson?.id, activeVideo?.id, expandedModuleId]);
+    }, [activeLesson?.id]);
 
-    // Handle body scroll lock for PYQ List Modal
+    // Prevent background scroll when modals are open
     useEffect(() => {
         if (isPyqListModalOpen || isPyqPreviewOpen) {
             document.body.style.overflow = 'hidden';
+            document.documentElement.style.overflow = 'hidden';
         } else {
             document.body.style.overflow = 'unset';
+            document.documentElement.style.overflow = 'unset';
         }
+        
         return () => {
             document.body.style.overflow = 'unset';
+            document.documentElement.style.overflow = 'unset';
         };
     }, [isPyqListModalOpen, isPyqPreviewOpen]);
 
@@ -329,53 +326,69 @@ const LearningPlayer: React.FC = () => {
             {/* PYQ List Modal Overlay */}
             {isPyqListModalOpen && activeLesson && createPortal(
                 <div 
-                    className="fixed inset-0 overflow-y-auto z-[999] custom-scrollbar"
-                    style={{ 
-                        background: '#05050A', 
-                        position: 'fixed'
+                    style={{
+                        position: 'fixed',
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        bottom: 0,
+                        zIndex: 9999999,
+                        backgroundColor: '#050508',
+                        overflowY: 'auto',
+                        WebkitOverflowScrolling: 'touch',
+                        display: 'block'
                     }}
                     onClick={() => setIsPyqListModalOpen(false)}
                 >
-                    {/* Centering wrapper with Navbar offset */}
-                    <div className="flex justify-center min-h-screen pt-[80px]">
+                    {/* Modal Content Wrapper */}
+                    <div 
+                        style={{
+                            width: '100%',
+                            minHeight: '100.1%',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            padding: isMobile ? '20px 0' : '60px 20px',
+                            boxSizing: 'border-box'
+                        }}
+                    >
                         <div 
-                            className="relative w-full max-w-[1100px] bg-[#0D0D15] shadow-2xl flex flex-col animate-in slide-in-from-bottom-8 duration-500"
+                            className="relative w-full max-w-[1000px] bg-[#0D0D15] shadow-2xl rounded-2xl flex flex-col overflow-hidden"
                             style={{ 
-                                borderLeft: '1px solid rgba(255,255,255,0.08)',
-                                borderRight: '1px solid rgba(255,255,255,0.08)',
-                                minHeight: 'calc(100vh - 80px)'
+                                border: '1px solid rgba(255,255,255,0.08)',
+                                cursor: 'default'
                             }}
                             onClick={e => e.stopPropagation()}
                         >
-                            {/* Modal header - Sticky at top of the scrollable drawer */}
-                            <div className="sticky top-0 flex items-center justify-between px-8 py-6 border-b border-white/[0.08] bg-[#0D0D15]/95 backdrop-blur-xl z-[30]">
-                                <div className="flex items-center gap-4">
-                                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/20 text-primary border border-primary/20 shadow-[0_0_15px_rgba(var(--color-primary-rgb),0.2)]">
-                                        <Library size={20} />
+                                {/* Header */}
+                                <div className="flex items-center justify-between px-6 md:px-8 py-5 md:py-6 border-b border-white/[0.08] bg-[#0D0D15] z-[30]">
+                                    <div className="flex items-center gap-3">
+                                        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/20 text-primary border border-primary/20">
+                                            <Library size={18} />
+                                        </div>
+                                        <div>
+                                            <h3 className="text-lg md:text-xl font-black text-white uppercase tracking-tight leading-none mb-1">Resource Library</h3>
+                                            <p className="text-[10px] md:text-xs text-[#94A3B8] font-bold uppercase tracking-widest opacity-70">Topic: {activeLesson.title}</p>
+                                        </div>
                                     </div>
-                                    <div>
-                                        <h3 className="text-xl font-black text-text-primary uppercase tracking-tight leading-none mb-1">Resource Library</h3>
-                                        <p className="text-xs text-text-muted font-bold uppercase tracking-widest opacity-70">Topic: {activeLesson.title}</p>
-                                    </div>
+                                    <button
+                                        onClick={() => setIsPyqListModalOpen(false)}
+                                        className="h-10 w-10 flex items-center justify-center text-[#94A3B8] hover:text-white transition-all rounded-full hover:bg-white/10 border border-white/5"
+                                    >
+                                        <X size={24} />
+                                    </button>
                                 </div>
-                                <button
-                                    onClick={() => setIsPyqListModalOpen(false)}
-                                    className="group h-12 w-12 flex items-center justify-center text-text-muted hover:text-white transition-all rounded-full hover:bg-white/10 border border-white/5 hover:border-white/20"
-                                >
-                                    <span className="text-4xl font-light leading-none group-hover:rotate-90 transition-transform">&times;</span>
-                                </button>
-                            </div>
 
-                            {/* Modal body - Directly Flowing */}
-                            <div className="p-8 md:p-10 pb-32">
-                                <PYQList 
-                                    pyqs={activeLesson.pyqs} 
-                                    onSelectPyq={(pyq) => {
-                                        setActivePyq(pyq);
-                                        setIsPyqPreviewOpen(true);
-                                    }}
-                                />
-                            </div>
+                                {/* PYQ List body */}
+                                <div className="p-6 md:p-10 pb-32">
+                                    <PYQList 
+                                        pyqs={activeLesson.pyqs} 
+                                        onSelectPyq={(pyq) => {
+                                            setActivePyq(pyq);
+                                            setIsPyqPreviewOpen(true);
+                                        }}
+                                    />
+                                </div>
                         </div>
                     </div>
                 </div>,

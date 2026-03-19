@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import GlassCard from '../components/GlassCard';
-import { ChevronDown, HelpCircle } from 'lucide-react';
+import { ChevronDown, HelpCircle, Mail } from 'lucide-react';
 import useTitle from '../hooks/useTitle';
 
 const FAQPage: React.FC = () => {
@@ -13,32 +13,52 @@ const FAQPage: React.FC = () => {
 
     const faqs = [
         {
-            q: "Why should the university/student pay for another platform when there are free sources like YouTube?",
-            a: "Free sources often provide fragmented or inconsistent content, lack structured learning paths, and fail to address specific university requirements. Our program is delivered by academic and industry experts with over 20+ years of experience, ensuring a cohesive, distract-free, and comprehensive learning journey specifically aligned to your syllabus."
+            q: "Besides curriculum, there are multiple free sources like YouTube. Why should I pay?",
+            a: "Free sources often provide fragmented content, lack structured learning paths, and fail to address specific challenges of engineering students. Our program is delivered by experts with 20+ years of experience, providing depth, coherence, and professional pedagogical innovations like concept testing and visualization."
         },
         {
             q: "Quickly summarize the key highlights of the Engineering Math program?",
-            a: "1. Comprehensive Curriculum aligned to VTU, KTU, Anna University, etc.\n2. Structured Learning from foundational to advanced concepts.\n3. Expert Instruction with practical industry relevance.\n4. Pedagogical Innovations including graphs, animations, and visualizations.\n5. Concept Testing for holistic reinforcement.\n6. Dedicated App/LMS experience."
+            a: "• Comprehensive Curriculum aligned to Universities (VTU, KTU, Anna, JNTU, etc.)\n• Structured Learning paths\n• Expert Instruction with practical relevance\n• Pedagogical Innovations (Graphs, Animations)\n• Concept Testing & Verification\n• Dedicated LMS & App experience\n• Scientifically designed assessments (20+ Model papers, 300+ checks)"
         },
         {
             q: "What are the payment options available?",
-            a: "Payments are facilitated by Razorpay, supporting Credit Cards, Debit Cards, and all major UPI handles like Google Pay and Paytm."
+            a: "Payments are facilitated by Razorpay, including Credit Cards, Debit Cards, and UPI (Google Pay, Paytm, PhonePe, etc.)."
         },
         {
             q: "Who are these courses for?",
-            a: "Our programs cater to Engineering Undergraduates across India. The courses are customized and aligned to all major universities for ease of absorption."
+            a: "Our Engineering Mathematics programs cater to Engineering Undergraduates. The courses are customized and aligned to all major universities across India."
         },
         {
-            q: "How do I raise tickets in case of doubts in the subject matter?",
-            a: "The LMS platform provides a dedicated forum for discussions. Doubts are captured weekly and addressed via dedicated doubt-clarification videos. For technical support, email us at support@mathinova.com."
+            q: "Is the discount a limited period offer?",
+            a: "Yes, the special discount is made available only for the first 30,000 customers, after which actual prices will apply."
         },
         {
-            q: "Will I have access beyond the license period?",
-            a: "Access duration depends on your chosen subscription. Please refer to your specific course license for exact validity days (e.g., 180 days, 365 days)."
+            q: "Are the prices fixed for individual buyers and businesses alike?",
+            a: "Prices are fixed for individual buyers. Bulk purchases over 500 licenses are negotiable."
         },
         {
-            q: "Is Engineering Mathematics available for CS, EEE, and other branches?",
-            a: "Yes! We are constantly expanding. Updates regarding new programs for various branches are pushed to all registered users via app notifications and email."
+            q: "Will I be able to have access to the product beyond the license period?",
+            a: "Access duration depends on the subscription option chosen. Please refer to the pricing sheet for specific durations."
+        },
+        {
+            q: "Will I get any freebies with the product?",
+            a: "Yes! You get access to live webinars, updated lectures, discount coupons for future purchases, and doubt clarification sessions."
+        },
+        {
+            q: "How do I raise tickets for doubts or technical issues?",
+            a: "The LMS provides a forum for discussions. Doubts are addressed weekly via dedicated videos. For technical issues, email: support@mathinova.com."
+        },
+        {
+            q: "How many universities are the programs currently aligned to?",
+            a: "Currently aligned to VTU (Karnataka) for Mechanical and allied branches. Expansion to major Indian universities is ongoing."
+        },
+        {
+            q: "Is Engineering Mathematics available for CS, EEE, EC, IT branches?",
+            a: "Updates regarding future programs for more branches will reach registered users via the mobile app and email as they become ready."
+        },
+        {
+            q: "Can I audit the course?",
+            a: "Yes, many free videos have been made available for review to help you understand our value proposition."
         }
     ];
 
@@ -58,7 +78,7 @@ const FAQPage: React.FC = () => {
                             Frequently Asked <span className="gradient-text">Questions</span>
                         </h1>
                         <p className="text-text-secondary">
-                            Everything you need to know about our learning platform.
+                            Everything you need to know about Mathinova.
                         </p>
                     </div>
 
@@ -69,7 +89,7 @@ const FAQPage: React.FC = () => {
                                 <GlassCard
                                     key={idx}
                                     onClick={() => setOpenIndex(isOpen ? null : idx)}
-                                    className={`rounded-3xl overflow-hidden transition-all duration-300 border-white/5 ${isOpen ? 'bg-white/[0.08] ring-1 ring-primary/30' : 'hover:bg-white/[0.04]'}`}
+                                    className={`rounded-2xl overflow-hidden transition-all duration-300 border-white/5 ${isOpen ? 'bg-white/[0.08] ring-1 ring-primary/30' : 'hover:bg-white/[0.04]'}`}
                                 >
                                     <div className="p-6 flex items-center justify-between text-left cursor-pointer">
                                         <span className={`text-[17px] font-bold transition-colors ${isOpen ? 'text-primary' : 'text-text-primary group-hover:text-primary'}`}>
@@ -95,12 +115,12 @@ const FAQPage: React.FC = () => {
 
                     <GlassCard className="mt-[30px] p-8 text-center bg-primary/5 border-primary/20">
                         <h3 className="text-xl font-bold text-text-primary mb-2">Still have questions?</h3>
-                        <p className="text-text-secondary mb-6">If you cannot find the answer you are looking for, please feel free to reach out.</p>
+                        <p className="text-text-secondary mb-6">Reach out to us if you need more information.</p>
                         <a
                             href="mailto:support@mathinova.com"
-                            className="inline-flex items-center gap-2 px-8 py-3 bg-primary hover:bg-primary-hover text-text-primary font-bold rounded-xl transition-all shadow-lg shadow-primary/20"
+                            className="inline-flex items-center gap-2 px-8 py-3 bg-primary hover:bg-primary-hover text-text-primary font-bold rounded-xl transition-all"
                         >
-                            Email Support
+                            <Mail size={18} /> Email Support
                         </a>
                     </GlassCard>
                 </div>
