@@ -1,5 +1,5 @@
 steps:
 - name: 'gcr.io/cloud-builders/docker'
-  args: ['build', '--build-arg', 'VITE_API_URL=https://mathinova-backend-420478767625.us-central1.run.app/api', '-t', 'us-central1-docker.pkg.dev/mathinova-staging/cloud-run-source-deploy/mathinova-frontend:latest', '.']
+  args: ['build', '--build-arg', 'VITE_API_URL=https://mathinova-backend-420478767625.us-central1.run.app/api', '-t', '$_IMAGE_NAME', '.']
 images:
-- 'us-central1-docker.pkg.dev/mathinova-staging/cloud-run-source-deploy/mathinova-frontend:latest'
+- '$_IMAGE_NAME'

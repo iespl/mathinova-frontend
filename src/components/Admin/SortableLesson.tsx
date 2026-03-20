@@ -46,9 +46,10 @@ const SortableLesson: React.FC<SortableLessonProps> = ({ lesson, onEdit, onDelet
         zIndex: isDragging ? 10 : 1
     };
 
-    // Use _count from optimized backend, fallback to array length if available
-    const videoCount = lesson._count?.videos ?? lesson.videos?.length ?? 0;
-    const pyqCount = lesson._count?.pyqs ?? lesson.pyqs?.length ?? 0;
+    // Use _count from optimized backend, or fallback to array length. 
+    // Use || instead of ?? to handle cases where _count might be 0 but arrays have content (e.g. newly added)
+    const videoCount = (lesson._count?.videos || 0) || (lesson.videos?.length || 0);
+    const pyqCount = (lesson._count?.pyqs || 0) || (lesson.pyqs?.length || 0);
     const hasContent = videoCount > 0 || pyqCount > 0;
 
     const handleToggleExpand = async (e: React.MouseEvent) => {

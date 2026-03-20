@@ -152,20 +152,36 @@ const CourseEditPage: React.FC = () => {
                 return {
                     ...nm,
                     lessons: nm.lessons.map((nl: any) => {
-                        // If this is the lesson we just updated, use the fresh details passed in
+                        // Priority 1: If this is the lesson we just updated, use the fresh details passed in
                         if (updatedLessonData && nl.id === updatedLessonData.id) {
-                            return { ...nl, videos: updatedLessonData.videos, pyqs: updatedLessonData.pyqs };
+                            return { 
+                                ...nl, 
+                                videos: updatedLessonData.videos, 
+                                pyqs: updatedLessonData.pyqs,
+                                _count: {
+                                    videos: updatedLessonData.videos.length,
+                                    pyqs: updatedLessonData.pyqs.length
+                                }
+                            };
                         }
 
                         const pl = pm.lessons.find((l: any) => l.id === nl.id);
                         if (!pl) return nl;
                         
-                        // Preserve existing full data if present for other lessons
+                        // Priority 2: Preserve existing full data if present for other lessons
                         const hasVideos = pl.videos && pl.videos.length > 0;
                         const hasPyqs = pl.pyqs && pl.pyqs.length > 0;
                         
                         if (hasVideos || hasPyqs) {
-                            return { ...nl, videos: pl.videos, pyqs: pl.pyqs };
+                            return { 
+                                ...nl, 
+                                videos: pl.videos, 
+                                pyqs: pl.pyqs,
+                                _count: {
+                                    videos: pl.videos?.length || nl._count?.videos || 0,
+                                    pyqs: pl.pyqs?.length || nl._count?.pyqs || 0
+                                }
+                            };
                         }
                         return nl;
                     })
@@ -303,7 +319,14 @@ const CourseEditPage: React.FC = () => {
             const newModules = prev.modules.map((m: any) => ({
                 ...m,
                 lessons: m.lessons.map((l: any) =>
-                    l.id === lessonId ? { ...l, ...data } : l
+                    l.id === lessonId ? { 
+                        ...l, 
+                        ...data,
+                        _count: {
+                            videos: data.videos?.length ?? l._count?.videos ?? 0,
+                            pyqs: data.pyqs?.length ?? l._count?.pyqs ?? 0
+                        }
+                    } : l
                 )
             }));
             return { ...prev, modules: newModules };

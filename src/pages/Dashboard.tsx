@@ -12,24 +12,8 @@ const Dashboard: React.FC = () => {
     useEffect(() => {
         const fetchCourses = async () => {
             try {
-                console.log('Starting native fetch...');
-                const token = localStorage.getItem('mathinova_token');
-
-                const response = await fetch('http://127.0.0.1:4000/api/student/courses', {
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Content-Type': 'application/json'
-                    }
-                });
-
-                console.log('Response Status:', response.status);
-
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-
-                const data = await response.json();
-                console.log('Data received:', data);
+                setIsLoading(true);
+                const { data } = await api.get('/student/courses');
                 setCourses(data);
             } catch (err) {
                 console.error('Failed to fetch enrolled courses', err);
@@ -44,7 +28,7 @@ const Dashboard: React.FC = () => {
         return (
             <div className="container" style={{ padding: '4rem 0', textAlign: 'center' }}>
                 <div className="animate-pulse">
-                    <h2 className="gradient-text" style={{ fontSize: '2rem' }}>Loading Your Mastery... (127.0.0.1)</h2>
+                    <h2 className="gradient-text" style={{ fontSize: '2rem' }}>Loading Your Mastery...</h2>
                 </div>
             </div>
         );

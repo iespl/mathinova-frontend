@@ -17,132 +17,100 @@ const RichTextDisplay: React.FC<RichTextDisplayProps> = ({
     fullWidthImages = false,
     horizontalPadding
 }) => {
-    // Generate a unique ID for this instance to scope the styles
     const instanceId = useMemo(() => `rt-${Math.random().toString(36).substr(2, 9)}`, []);
 
     const processedHtml = useMemo(() => {
         if (!htmlContent) return '';
+        
+        try {
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(htmlContent, 'text/html');
 
-        let content = htmlContent;
+            const formulaSpans = doc.querySelectorAll('.ql-formula');
+            formulaSpans.forEach(span => {
+                const formula = span.getAttribute('data-value');
+                if (formula) {
+                    try {
+                        let decodedFormula = formula.replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"');
+                        const rendered = katex.renderToString(decodedFormula, {
+                            throwOnError: false,
+                            displayMode: false,
+                            output: 'html'
+                        });
+                        span.innerHTML = rendered;
+                        span.classList.add('rt-rendered');
+                    } catch (e) {}
+                }
+            });
 
-        // 1. Sanitize non-breaking spaces
-        content = content.replace(/&nbsp;/g, ' ').replace(/\u00A0/g, ' ');
+            const walk = doc.createTreeWalker(doc.body, NodeFilter.SHOW_TEXT, (node) => {
+                let parent = node.parentElement;
+                while (parent) {
+                    if (parent.classList.contains('katex') || parent.classList.contains('rt-rendered')) {
+                        return NodeFilter.FILTER_REJECT;
+                    }
+                    parent = parent.parentElement;
+                }
+                return NodeFilter.FILTER_ACCEPT;
+            });
 
-        // 2. Convert standard math delimiters
-        content = content.replace(/\$\$([\s\S]+?)\$\$/g, (match, formula) => {
-            try {
-                return katex.renderToString(formula, { throwOnError: false, displayMode: true });
-            } catch (e) {
-                return match;
-            }
-        });
+            let n;
+            const textNodes = [];
+            while (n = walk.nextNode()) { textNodes.push(n); }
 
-        content = content.replace(/\\\[([\s\S]+?)\\\]/g, (match, formula) => {
-            try {
-                return katex.renderToString(formula, { throwOnError: false, displayMode: true });
-            } catch (e) {
-                return match;
-            }
-        });
+            textNodes.forEach(node => {
+                let text = node.nodeValue || '';
+                if (!text.trim() || text.length < 2) return;
 
-        // 3. Convert Quill formula spans
-        content = content.replace(/<span[^>]*class=["'][^"']*ql-formula[^"']*["'][^>]*data-value=["']([^"']+)["'][^>]*>[\s\S]*?<\/span>(\s*<\/span>)*/g, (match, formula) => {
-            try {
-                let decodedFormula = formula.replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"');
-                return katex.renderToString(decodedFormula, { throwOnError: false, displayMode: false });
-            } catch (e) {
-                return match;
-            }
-        });
+                let hasMath = false;
+                text = text.replace(/\$\$([\s\S]+?)\$\$/g, (match, formula) => {
+                    hasMath = true;
+                    try { return katex.renderToString(formula, { throwOnError: false, displayMode: true, output: 'html' }); } catch (e) { return match; }
+                });
+                text = text.replace(/\\\[([\s\S]+?)\\\]/g, (match, formula) => {
+                    hasMath = true;
+                    try { return katex.renderToString(formula, { throwOnError: false, displayMode: true, output: 'html' }); } catch (e) { return match; }
+                });
+                text = text.replace(/\$((?:[^$]|\\\$)+?)\$/g, (match, formula) => {
+                    hasMath = true;
+                    try { return katex.renderToString(formula, { throwOnError: false, displayMode: false, output: 'html' }); } catch (e) { return match; }
+                });
+                text = text.replace(/\\\(([\s\S]+?)\\\)/g, (match, formula) => {
+                    hasMath = true;
+                    try { return katex.renderToString(formula, { throwOnError: false, displayMode: false, output: 'html' }); } catch (e) { return match; }
+                });
 
-        // 4. Convert raw inline math
-        content = content.replace(/\$((?:[^$]|\\\$)+?)\$/g, (match, formula) => {
-            try {
-                return katex.renderToString(formula, { throwOnError: false, displayMode: false });
-            } catch (e) {
-                return match;
-            }
-        });
+                if (hasMath) {
+                    const span = doc.createElement('span');
+                    span.innerHTML = text;
+                    node.parentNode?.replaceChild(span, node);
+                }
+            });
 
-        content = content.replace(/\\\(([\s\S]+?)\\\)/g, (match, formula) => {
-            try {
-                return katex.renderToString(formula, { throwOnError: false, displayMode: false });
-            } catch (e) {
-                return match;
-            }
-        });
-
-        return content;
+            return doc.body.innerHTML;
+        } catch (err) {
+            return htmlContent;
+        }
     }, [htmlContent]);
 
     return (
-        <div 
-            id={instanceId} 
-            className={`rich-text-content ${className}`} 
-            style={{ 
-                ...style, 
-                boxSizing: 'border-box',
-                maxWidth: '100%',
-                overflowX: 'visible', // Allow images to spill out into parent padding
-                wordBreak: 'break-word'
-            }}
-        >
+        <div id={instanceId} className={`rich-text-content-v5 ${className}`} style={{ ...style, boxSizing: 'border-box', maxWidth: '100%', overflowX: 'visible', wordBreak: 'break-word' }}>
             <style>{`
-                #${instanceId} * {
-                    box-sizing: border-box !important;
+                #${instanceId} * { box-sizing: border-box !important; }
+                #${instanceId} .katex-mathml, 
+                #${instanceId} .katex-accessible,
+                #${instanceId} .katex > .katex-html + .katex-html,
+                #${instanceId} .katex-html > .katex-mathml { 
+                    display: none !important; 
+                    visibility: hidden !important; 
+                    opacity: 0 !important; 
+                    height: 0 !important; 
+                    width: 0 !important; 
+                    position: absolute !important; 
+                    pointer-events: none !important;
                 }
-                #${instanceId} p,
-                #${instanceId} div,
-                #${instanceId} h1,
-                #${instanceId} h2,
-                #${instanceId} h3,
-                #${instanceId} h4,
-                #${instanceId} h5,
-                #${instanceId} h6,
-                #${instanceId} ul,
-                #${instanceId} ol {
-                    max-width: 100% !important;
-                    margin: 0 0 0.5em 0 !important;
-                    box-sizing: border-box !important;
-                    padding-left: ${fullWidthImages ? 'var(--rt-padding, 0)' : '0'} !important;
-                    padding-right: ${fullWidthImages ? 'var(--rt-padding, 0)' : '0'} !important;
-                }
-                #${instanceId} img {
-                    display: block !important;
-                    margin: 12px ${fullWidthImages ? 'calc(-1 * var(--rt-padding, 20px))' : '0'} !important;
-                    border-radius: ${fullWidthImages ? '0' : '8px'};
-                    height: auto !important;
-                    width: ${fullWidthImages ? 'calc(100% + 2 * var(--rt-padding, 20px))' : '100%'} !important;
-                    max-width: ${fullWidthImages ? 'none' : '100%'} !important;
-                    object-fit: contain !important;
-                }
-                #${instanceId} {
-                    --rt-padding: ${horizontalPadding !== undefined ? horizontalPadding+'px' : '20px'};
-                }
-                @media (min-width: 768px) {
-                    #${instanceId} {
-                        --rt-padding: ${horizontalPadding !== undefined ? horizontalPadding+'px' : '40px'};
-                    }
-                }
-                #${instanceId} .katex-display {
-                    overflow-x: auto !important;
-                    overflow-y: hidden !important;
-                    max-width: 100% !important;
-                    padding: 0.8rem 0;
-                    margin: 0 !important;
-                    text-align: left !important; /* Align equations to the left */
-                }
-                #${instanceId} .katex-display > .katex {
-                    text-align: left !important;
-                    white-space: normal !important;
-                }
-                #${instanceId} .katex-mathml {
-                    display: none !important;
-                }
-                #${instanceId} strong { font-weight: 700; }
-                #${instanceId} em { font-style: italic; }
             `}</style>
-            <div dangerouslySetInnerHTML={{ __html: processedHtml }} style={{ maxWidth: '100%', boxSizing: 'border-box' }} />
+            <div dangerouslySetInnerHTML={{ __html: processedHtml }} />
         </div>
     );
 };
